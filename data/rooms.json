@@ -1,0 +1,1605 @@
+{
+  "data": [
+    {
+      "id": "69ca9347403fdbaa6f55f10d",
+      "code": "201-cs5",
+      "name": "201",
+      "description": "",
+      "rules": null,
+      "floor": 2,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inches",
+        "Bồn tắm",
+        "View phố"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69c832347ba61ab2edd5e7e9",
+        "name": "deluxe extra"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f115",
+      "code": "202-cs5",
+      "name": "202",
+      "description": "Phòng hạng Deluxe có ban công ( TV trong phòng ngủ, có bồn tắm)",
+      "rules": null,
+      "floor": 2,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4b6",
+      "code": "203-cs5",
+      "name": "203",
+      "description": "Phòng hạng Standard ( TV trong phòng ngủ, có bồn tắm)",
+      "rules": null,
+      "floor": 2,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4b7",
+      "code": "204-cs5",
+      "name": "204",
+      "description": "Phòng Standard (có máy chiếu trong phòng ngủ, có bồn tắm)",
+      "rules": null,
+      "floor": 2,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4b8",
+      "code": "205-cs5",
+      "name": "205",
+      "description": "Phòng standard ( TV ngoài phòng khách, có bồn tắm)",
+      "rules": null,
+      "floor": 2,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4b9",
+      "code": "206-cs5",
+      "name": "206",
+      "description": "Phòng Standard TV trong phòng ngủ ( không bồn tắm )",
+      "rules": null,
+      "floor": 2,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "tv netflix"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f11a",
+      "code": "207-cs5",
+      "name": "207",
+      "description": "",
+      "rules": null,
+      "floor": 2,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f11d",
+      "code": "301-cs5",
+      "name": "301",
+      "description": "",
+      "rules": null,
+      "floor": 3,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f121",
+      "code": "302-cs5",
+      "name": "302",
+      "description": "",
+      "rules": null,
+      "floor": 3,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4ba",
+      "code": "303-cs5",
+      "name": "303",
+      "description": "",
+      "rules": null,
+      "floor": 3,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4bc",
+      "code": "304-cs5",
+      "name": "304",
+      "description": "",
+      "rules": null,
+      "floor": 3,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4bd",
+      "code": "306-cs5",
+      "name": "306",
+      "description": "",
+      "rules": null,
+      "floor": 3,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f124",
+      "code": "307-cs5",
+      "name": "307",
+      "description": "",
+      "rules": null,
+      "floor": 3,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4bb",
+      "code": "340-cs5",
+      "name": "340",
+      "description": "",
+      "rules": null,
+      "floor": 3,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca32784df3bb27fea57e63",
+      "code": "401-cs1",
+      "name": "401",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f126",
+      "code": "401-cs5",
+      "name": "401",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca375dd1de77b6308b4143",
+      "code": "402-cs1",
+      "name": "402",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f128",
+      "code": "402-cs5",
+      "name": "402",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca375dd1de77b6308b4144",
+      "code": "403-cs1",
+      "name": "403",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4be",
+      "code": "403-cs5",
+      "name": "403",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8057a7ef014e6a0a723a",
+      "code": "404-cs1",
+      "name": "404",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inches",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Bồn tắm",
+        "View phố"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69c832347ba61ab2edd5e7e9",
+        "name": "deluxe extra"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4bf",
+      "code": "404-cs5",
+      "name": "404",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca375dd1de77b6308b4145",
+      "code": "405-cs1",
+      "name": "405",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4c0",
+      "code": "405-cs5",
+      "name": "405",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4c1",
+      "code": "406-cs5",
+      "name": "406",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f12a",
+      "code": "407-cs5",
+      "name": "407",
+      "description": "",
+      "rules": null,
+      "floor": 4,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4c2",
+      "code": "501-cs5",
+      "name": "501",
+      "description": "",
+      "rules": null,
+      "floor": 5,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca375dd1de77b6308b4146",
+      "code": "502-cs1",
+      "name": "502",
+      "description": "",
+      "rules": null,
+      "floor": 5,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4c3",
+      "code": "502-cs5",
+      "name": "502",
+      "description": "",
+      "rules": null,
+      "floor": 5,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca375dd1de77b6308b4147",
+      "code": "503-cs1",
+      "name": "503",
+      "description": "",
+      "rules": null,
+      "floor": 5,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f12c",
+      "code": "503-cs5",
+      "name": "503",
+      "description": "",
+      "rules": null,
+      "floor": 5,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca80c450ed10866ecdd066",
+      "code": "505-cs1",
+      "name": "505",
+      "description": "",
+      "rules": null,
+      "floor": 5,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inches",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Bồn tắm",
+        "View phố"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69c832347ba61ab2edd5e7e9",
+        "name": "deluxe extra"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4c4",
+      "code": "601-cs5",
+      "name": "601",
+      "description": "",
+      "rules": null,
+      "floor": 6,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca375dd1de77b6308b4148",
+      "code": "602-cs1",
+      "name": "602",
+      "description": "",
+      "rules": null,
+      "floor": 6,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4c5",
+      "code": "602-cs5",
+      "name": "602",
+      "description": "",
+      "rules": null,
+      "floor": 6,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca375dd1de77b6308b4149",
+      "code": "603-cs1",
+      "name": "603",
+      "description": "",
+      "rules": null,
+      "floor": 6,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f12e",
+      "code": "603-cs5",
+      "name": "603",
+      "description": "",
+      "rules": null,
+      "floor": 6,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca80d850ed10866ecdd067",
+      "code": "605-cs1",
+      "name": "605",
+      "description": "",
+      "rules": null,
+      "floor": 6,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inches",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Bồn tắm",
+        "View phố"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69c832347ba61ab2edd5e7e9",
+        "name": "deluxe extra"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca375dd1de77b6308b414a",
+      "code": "607-cs1",
+      "name": "607",
+      "description": "",
+      "rules": null,
+      "floor": 6,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Tủ lạnh",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu",
+        "Tivi 43 inch",
+        "Máy lạnh"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76f14594e1f055aad182d",
+        "name": "Bảo An - Cơ sở 1",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76d3b408e85e112989756",
+        "alias": "Bảo An - cơ sở 1",
+        "fullAddress": "125a Bắc Sơn, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4c6",
+      "code": "701-cs5",
+      "name": "701",
+      "description": "",
+      "rules": null,
+      "floor": 7,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca8cfaaf0e4e59948cc4c7",
+      "code": "702-cs5",
+      "name": "702",
+      "description": "",
+      "rules": null,
+      "floor": 7,
+      "sqm": 35,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 500000,
+      "roomType": {
+        "id": "69c80f1499a63b61528284d5",
+        "name": "standard"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    },
+    {
+      "id": "69ca9348403fdbaa6f55f130",
+      "code": "703-cs5",
+      "name": "703",
+      "description": "",
+      "rules": null,
+      "floor": 7,
+      "sqm": 30,
+      "bedroomCount": 1,
+      "bedCount": 1,
+      "bathroomCount": 1,
+      "amenities": [
+        "Phòng khách",
+        "Ban công",
+        "Máy lạnh",
+        "Tủ lạnh",
+        "Tivi 43 inch",
+        "Nóng lạnh",
+        "Bàn làm việc",
+        "Bếp nấu"
+      ],
+      "status": "available",
+      "price": 600000,
+      "roomType": {
+        "id": "69ca9168af0e4e59948cc4f5",
+        "name": "deluxe"
+      },
+      "property": {
+        "id": "69c76fcf594e1f055aad1880",
+        "name": "Bảo An - Cơ sở 5",
+        "type": "homestay"
+      },
+      "address": {
+        "id": "69c76dfc408e85e112989757",
+        "alias": "Bảo An - cơ sở 5",
+        "fullAddress": "Nguyễn Công Hoan, Phan Đình Phùng"
+      },
+      "images": []
+    }
+  ],
+  "pagination": {
+    "total": 42,
+    "fetched": 42,
+    "limit": 10,
+    "pagesIncluded": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "pagesMissing": []
+  }
+}
