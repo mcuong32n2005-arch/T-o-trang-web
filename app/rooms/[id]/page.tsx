@@ -380,22 +380,22 @@ export default function RoomDetailPage() {
 
             <main className="max-w-7xl mx-auto px-4 md:px-8 py-6">
                 {/* ẢNH PHÒNG: 1 ảnh lớn + lưới ảnh nhỏ */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 rounded-2xl overflow-hidden mb-6" style={{ height: "420px" }}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 rounded-2xl overflow-hidden mb-6 md:h-[420px]">
                     <button
                         type="button"
                         onClick={() => setLightboxOpen(true)}
-                        className="md:col-span-2 h-64 md:h-full bg-gray-100 cursor-pointer"
+                        className="md:col-span-2 h-64 md:h-full min-h-0 bg-gray-100 cursor-pointer flex items-center justify-center overflow-hidden"
                     >
-                        <img src={gallery[activeImage]} alt={room.name} className="w-full h-full object-cover" />
+                        <img src={gallery[activeImage]} alt={room.name} className="w-full h-full object-contain" />
                     </button>
-                    <div className="grid grid-cols-2 md:grid-cols-2 gap-2 h-full">
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:h-full min-h-0">
                         {gallery.slice(0, 4).map((img, i) => (
                             <button
                                 key={i}
                                 onClick={() => { setActiveImage(i); setLightboxOpen(true); }}
-                                className={`relative h-full w-full bg-gray-100 overflow-hidden ${activeImage === i ? "ring-2 ring-green-600" : ""}`}
+                                className={`relative h-32 md:h-full w-full min-h-0 bg-gray-100 overflow-hidden flex items-center justify-center ${activeImage === i ? "ring-2 ring-green-600" : ""}`}
                             >
-                                <img src={img} alt={`${room.name} ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition duration-300" />
+                                <img src={img} alt={`${room.name} ${i + 1}`} className="w-full h-full object-contain hover:scale-105 transition duration-300" />
                                 {i === 3 && gallery.length > 4 && (
                                     <span className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-sm font-semibold">
                                         +{gallery.length - 4} ảnh
