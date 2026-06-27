@@ -198,6 +198,233 @@ const FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80",
 ];
 
+// ─── Gộp tiện ích trùng lặp (vd: "Tivi 43 inch", "Tivi 43 inches", "tv netflix"
+// đều là TV nên chỉ hiện 1 dòng "Tivi"). Cũng khử các tiện ích bị nhập trùng
+// y nguyên (khác hoa/thường, thừa khoảng trắng) trong dữ liệu gốc. ─────────────
+function dedupeAmenities(amenities: string[] | undefined): string[] {
+    if (!amenities || amenities.length === 0) return [];
+
+    const seenKeys = new Set<string>();
+    const result: string[] = [];
+
+    for (const raw of amenities) {
+        const trimmed = raw.trim();
+        if (!trimmed) continue;
+        const lower = trimmed.toLowerCase();
+
+        // Mọi biến thể tivi/tv đều quy về một nhóm duy nhất
+        const key = lower.includes("tivi") || lower.includes("tv") ? "tivi" : lower;
+
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+
+        // Hiển thị "Tivi" gọn gàng thay vì giữ nguyên "Tivi 43 inch(es)" / "tv netflix"
+        result.push(key === "tivi" ? "Tivi" : trimmed);
+    }
+
+    return result;
+}
+
+// ─── Phân nhóm tiện nghi để hiển thị giống trang chi tiết kiểu Airbnb/2home.
+// Dữ liệu amenities hiện tại chỉ là mảng string phẳng, nên ta tự ánh xạ từng
+// tên tiện ích vào nhóm phù hợp theo từ khoá. Nhóm nào không có tiện ích nào
+// khớp với dữ liệu thật của phòng sẽ tự ẩn (không hiện nhóm trống). ──────────
+const AMENITY_GROUP_DEFS: { title: string; match: (lowerName: string) => boolean }[] = [
+    {
+        title: "Không gian",
+        match: (n) =>
+            n.includes("tivi") ||
+            n.includes("tv") ||
+            n.includes("wifi") ||
+            n.includes("điều hoà") ||
+            n.includes("điều hòa") ||
+            n.includes("máy lạnh") ||
+            n.includes("phòng khách") ||
+            n.includes("ban công") ||
+            n.includes("bàn làm việc") ||
+            n.includes("view") ||
+            n.includes("dép đi trong nhà"),
+    },
+    {
+        title: "Phòng tắm",
+        match: (n) =>
+            n.includes("bồn tắm") ||
+            n.includes("nóng lạnh") ||
+            n.includes("phòng tắm đứng") ||
+            n.includes("máy sấy") ||
+            n.includes("dầu gội") ||
+            n.includes("sữa tắm") ||
+            n.includes("khăn tắm") ||
+            n.includes("giấy vệ sinh") ||
+            n.includes("kem đánh răng") ||
+            n.includes("bàn chải đánh răng") ||
+            n.includes("nước rửa tay") ||
+            n.includes("áo choàng tắm"),
+    },
+    {
+        title: "Bếp (Liên hệ trước)",
+        match: (n) =>
+            n.includes("bếp") ||
+            n.includes("tủ lạnh") ||
+            n.includes("nồi") ||
+            n.includes("chảo") ||
+            n.includes("bát") ||
+            n.includes("lò") ||
+            n.includes("ấm siêu tốc") ||
+            n.includes("nước khoáng") ||
+            n.includes("gia vị"),
+    },
+    {
+        title: "Chỗ đỗ xe (Có thu phí)",
+        match: (n) => n.includes("ô tô") || n.includes("xe máy") || n.includes("xe đạp") || n.includes("đỗ xe"),
+    },
+];
+
+function groupAmenities(amenities: string[] | undefined) {
+    const cleaned = dedupeAmenities(amenities);
+    const groups: { title: string; items: string[] }[] = [];
+    const used = new Set<string>();
+
+    for (const def of AMENITY_GROUP_DEFS) {
+        const items = cleaned.filter((a) => def.match(a.toLowerCase()));
+        if (items.length > 0) {
+            groups.push({ title: def.title, items });
+            items.forEach((i) => used.add(i));
+        }
+    }
+
+    // Tiện ích chưa khớp nhóm nào nhưng vẫn có dữ liệu thật → gom vào "Khác"
+    const leftover = cleaned.filter((a) => !used.has(a));
+    if (leftover.length > 0) {
+        groups.push({ title: "Khác", items: leftover });
+    }
+
+    return groups;
+}
+
+// ─── Nội dung đầy đủ chính sách huỷ và chỉnh sửa (đổi từ "2home" → "Bảo An Homestay") ──
+const CANCELLATION_POLICY_DETAIL = {
+    title: "Chi tiết chính sách huỷ và chỉnh sửa",
+    sections: [
+        {
+            heading: "I. Chính sách hủy",
+            paragraphs: [
+                "Bảo An Homestay thực hiện các chính sách hủy phòng tiêu chuẩn được nêu sau đây để bảo vệ quyền lợi của khách hàng và chủ nhà. Chính sách hủy sẽ được nêu rõ trong chi tiết từng căn hộ.",
+                "Tiền đặt phòng sẽ được hoàn lại 99% nếu thời điểm khách hàng thông báo hủy đơn đặt phòng trước ít nhất 2 ngày so với thời gian đã đặt để nhận căn hộ. Bảo An Homestay sẽ chuyển khoản số tiền mà khách hàng được hoàn lại trong vòng 48h làm việc kể từ thời gian khách hàng huỷ booking.",
+                "Tiền dịch vụ không được hoàn nếu khách hàng thông báo hủy đơn đặt phòng trong vòng 48 tiếng trước giờ nhận phòng hoặc khách hàng không tới nhận phòng.",
+            ],
+        },
+        {
+            heading: "Lưu ý:",
+            paragraphs: [
+                "Trong trường hợp được hoàn tiền, số tiền tối đa khách hàng được hoàn nếu đơn bị hủy là 100% giá trị đã thanh toán. Tuy nhiên, số tiền được hoàn tối đa là 99% giá trị thanh toán nếu khách hàng chọn hoàn tiền vào tài khoản ngân hàng của mình (nếu khách hàng chủ động hủy đơn hàng).",
+                "Nếu khách hàng thanh toán đơn bằng số dư tài khoản Bảo An Homestay thì số tiền được hoàn sẽ tự động được chuyển vào tài khoản Bảo An Homestay của khách. Nếu khách hàng thanh toán bằng các hình thức khác thì có thể chọn hình thức hoàn tiền là hoàn vào tài khoản Bảo An Homestay hoặc hoàn vào tài khoản ngân hàng mà khách hàng cung cấp.",
+                "Mã giảm giá đã được sử dụng cho đơn đặt phòng sẽ bị hủy cùng đơn đặt phòng nếu khách hàng hủy đơn đặt phòng, và không được khôi phục lại để sử dụng cho lần đặt phòng khác.",
+            ],
+        },
+        {
+            heading: "II. Chính sách chỉnh sửa đơn đặt phòng",
+            paragraphs: [
+                "Khách hàng có thể yêu cầu chỉnh sửa thông tin đơn đặt phòng (thời gian nhận/trả phòng, số lượng khách) trước thời điểm nhận phòng, tùy theo tình trạng phòng còn trống tại thời điểm yêu cầu.",
+                "Mọi thay đổi liên quan đến giá phòng phát sinh do điều chỉnh thời gian lưu trú sẽ được tính lại theo bảng giá hiện hành của căn hộ tại thời điểm chỉnh sửa.",
+                "Vui lòng liên hệ bộ phận hỗ trợ của Bảo An Homestay sớm nhất có thể để được xử lý yêu cầu chỉnh sửa nhanh chóng.",
+            ],
+        },
+    ],
+};
+
+
+
+// ─── Khối "Tiện nghi" hiển thị theo nhóm, có Xem thêm / Thu gọn ─────────────
+function AmenitiesSection({ amenities }: { amenities: string[] | undefined }) {
+    const [expanded, setExpanded] = useState(false);
+    const groups = useMemo(() => groupAmenities(amenities), [amenities]);
+
+    if (groups.length === 0) return null;
+
+    // Khi chưa "Xem thêm": chỉ hiện nhóm đầu tiên (giống hình mẫu — chỉ thấy "Không gian")
+    const visibleGroups = expanded ? groups : groups.slice(0, 1);
+
+    return (
+        <div className="border border-gray-200 rounded-2xl p-5">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Tiện nghi</h2>
+
+            <div className="space-y-5">
+                {visibleGroups.map((group) => (
+                    <div key={group.title}>
+                        <h3 className="text-sm font-bold text-gray-900 mb-2.5">{group.title}</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-2 gap-x-4">
+                            {group.items.map((item) => (
+                                <span key={item} className="text-sm text-gray-600">
+                                    {item}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {groups.length > 1 && (
+                <button
+                    onClick={() => setExpanded((v) => !v)}
+                    className="mt-4 text-sm font-semibold text-green-700 hover:underline"
+                >
+                    {expanded ? "Thu gọn" : "Xem thêm"}
+                </button>
+            )}
+        </div>
+    );
+}
+
+// ─── Modal "Chi tiết chính sách huỷ và chỉnh sửa" ───────────────────────────
+function CancellationPolicyModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 border-b border-gray-100">
+                    <h2 className="text-lg font-bold text-gray-900">{CANCELLATION_POLICY_DETAIL.title}</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 transition"
+                        aria-label="Đóng"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Nội dung cuộn được */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 text-sm text-gray-700 leading-relaxed">
+                    {CANCELLATION_POLICY_DETAIL.sections.map((section) => (
+                        <div key={section.heading}>
+                            <h3 className="font-bold text-gray-900 mb-2">{section.heading}</h3>
+                            <div className="space-y-2">
+                                {section.paragraphs.map((p, i) => (
+                                    <p key={i}>{p}</p>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-gray-100 shrink-0 text-right">
+                    <button
+                        onClick={onClose}
+                        className="bg-green-600 text-white text-sm font-semibold px-6 py-2.5 rounded-full hover:bg-green-700 transition"
+                    >
+                        Đã hiểu
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function RoomDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -220,6 +447,7 @@ export default function RoomDetailPage() {
     const [submitting, setSubmitting] = useState(false);
     const [bookingError, setBookingError] = useState("");
     const [bookingSuccess, setBookingSuccess] = useState(false);
+    const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
 
     useEffect(() => {
         if (!roomId) return;
@@ -535,25 +763,27 @@ export default function RoomDetailPage() {
                         </div>
 
                         {/* Giới thiệu căn hộ */}
-                        <div>
-                            <h2 className="text-lg font-bold text-gray-900 mb-4">Giới thiệu căn hộ</h2>
-                            {room.description && (
-                                <p className="text-sm text-gray-600 leading-relaxed mb-4">{room.description}</p>
-                            )}
-                            {room.amenities?.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {room.amenities.map((a, i) => (
-                                        <span key={i} className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1">
-                      <span className="text-green-600">✔</span> {a}
-                    </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {room.description && (
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900 mb-4">Giới thiệu căn hộ</h2>
+                                <p className="text-sm text-gray-600 leading-relaxed">{room.description}</p>
+                            </div>
+                        )}
+
+                        {/* Tiện nghi — hiển thị theo nhóm, có Xem thêm / Thu gọn */}
+                        <AmenitiesSection amenities={room.amenities} />
 
                         {/* Chính sách huỷ — văn bản chung, sửa lại cho đúng chính sách thực tế của bạn */}
                         <div className="border-t border-gray-100 pt-6">
-                            <h2 className="text-lg font-bold text-gray-900 mb-4">Chính sách huỷ và chỉnh sửa</h2>
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-bold text-gray-900">Chính sách huỷ và chỉnh sửa</h2>
+                                <button
+                                    onClick={() => setCancellationModalOpen(true)}
+                                    className="text-sm font-semibold text-green-700 hover:underline"
+                                >
+                                    Chi tiết
+                                </button>
+                            </div>
                             <div className="space-y-3 text-sm">
                                 <div className="flex items-start gap-3">
                                     <span className="text-green-600 mt-0.5">🏷️</span>
@@ -579,6 +809,12 @@ export default function RoomDetailPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Modal chi tiết chính sách huỷ và chỉnh sửa */}
+                    <CancellationPolicyModal
+                        open={cancellationModalOpen}
+                        onClose={() => setCancellationModalOpen(false)}
+                    />
 
                     {/* ═══════ CỘT PHẢI: SIDEBAR ĐẶT PHÒNG ═══════ */}
                     <div className="lg:col-span-1">

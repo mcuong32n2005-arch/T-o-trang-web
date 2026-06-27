@@ -10,7 +10,6 @@ const SIDEBAR_ITEMS = [
     { icon: "reward", label: "Điểm thưởng và ưu đãi", href: "/account/rewards" },
     { icon: "heart", label: "Phòng yêu thích", href: "/account/favorites" },
     { icon: "booking", label: "Quản lý đặt phòng", href: "/account/bookings" },
-    { icon: "prepay", label: "Gói trả trước", href: "/account/prepay" },
 ];
 
 function SidebarIcon({ type }: { type: string }) {
@@ -45,12 +44,6 @@ function SidebarIcon({ type }: { type: string }) {
             return (
                 <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m-9 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            );
-        case "prepay":
-            return (
-                <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 9v1m0-9a9 9 0 100 18 9 9 0 000-18z" />
                 </svg>
             );
         default:

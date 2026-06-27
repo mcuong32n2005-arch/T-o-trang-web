@@ -11,7 +11,17 @@ interface Customer {
   address?: string;
   status: string;
   note?: string;
+  isLocked?: boolean;
   createdAt?: string;
+}
+
+interface BookingHistoryItem {
+  id: string;
+  roomName?: string;
+  checkIn: string;
+  checkOut: string;
+  totalPrice: number;
+  status: string;
 }
 
 // Helper: lấy ID đúng dù API trả về "id" hay "_id"
@@ -36,12 +46,15 @@ export default function AdminCustomersPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
+  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
+  const [history, setHistory] = useState<BookingHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
   const loadCustomers = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/customers");
       const data = await res.json();
-      // Chuẩn hóa: MongoDB trả về _id, đảm bảo luôn có trường id
       const raw: Customer[] = data.data || [];
       const normalized = raw.map((c: Customer) => ({
         ...c,
@@ -146,165 +159,250 @@ export default function AdminCustomersPage() {
     }
   };
 
-  return (
-      <div className="space-y-6">
-        <header className="flex justify-between items-center border-b border-gray-200 pb-5">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">Quản lý khách hàng</h1>
-            <p className="text-xs text-gray-500">Danh sách khách hàng lưu trong MongoDB — chỉ admin xem được.</p>
-          </div>
-          <button
-              onClick={openAddForm}
-              className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs transition flex items-center gap-1.5"
-          >
-            ➕ Thêm khách hàng
-          </button>
-        </header>
+  const handleToggleLock = async (customer: Customer) => {
+    const customerId = getCustomerId(customer);
+    try {
+      const res = await fetch(`/api/customers/${customerId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isLocked: !customer.isLocked }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Không thể đổi trạng thái khoá.");
+        return;
+      }
+      setCustomers((prev) =>
+        prev.map((c) => (getCustomerId(c) === customerId ? { ...c, isLocked: !customer.isLocked } : c))
+      );
+    } catch (error) {
+      console.error("Lỗi khoá/mở khoá khách hàng:", error);
+      alert("Không thể kết nối tới máy chủ.");
+    }
+  };
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
-          {loading ? (
-              <div className="p-10 text-center text-sm text-gray-400">Đang tải danh sách khách hàng...</div>
-          ) : customers.length === 0 ? (
-              <div className="p-10 text-center text-sm text-gray-400">Chưa có khách hàng nào. Bấm "Thêm khách hàng" để bắt đầu.</div>
-          ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-                <tr>
-                  <th className="text-left px-5 py-3">Họ tên</th>
-                  <th className="text-left px-5 py-3">Điện thoại</th>
-                  <th className="text-left px-5 py-3">Email</th>
-                  <th className="text-left px-5 py-3">Trạng thái</th>
-                  <th className="text-left px-5 py-3">Ghi chú</th>
-                  <th className="text-right px-5 py-3">Hành động</th>
-                </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                {customers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50/60 transition">
-                      <td className="px-5 py-3 font-bold text-gray-800">{customer.name}</td>
-                      <td className="px-5 py-3 text-gray-600 font-mono">{customer.phone}</td>
-                      <td className="px-5 py-3 text-gray-600">{customer.email || "—"}</td>
-                      <td className="px-5 py-3">
+  const openHistory = async (customer: Customer) => {
+    setHistoryCustomer(customer);
+    setHistoryLoading(true);
+    setHistory([]);
+    try {
+      // Lọc booking theo số điện thoại khách (admin-bookings trả về toàn bộ booking)
+      const res = await fetch(`/api/admin-bookings`);
+      const data = await res.json();
+      const all = data.data || [];
+      const filtered = all.filter((b: { guestPhone?: string }) => b.guestPhone === customer.phone);
+      setHistory(filtered);
+    } catch (error) {
+      console.error("Lỗi tải lịch sử booking:", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <header className="flex justify-between items-center border-b border-gray-200 pb-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">Quản lý khách hàng</h1>
+          <p className="text-xs text-gray-500">Danh sách khách hàng lưu trong MongoDB — chỉ admin xem được.</p>
+        </div>
+        <button
+          onClick={openAddForm}
+          className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs transition flex items-center gap-1.5"
+        >
+          ➕ Thêm khách hàng
+        </button>
+      </header>
+
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+        {loading ? (
+          <div className="p-10 text-center text-sm text-gray-400">Đang tải danh sách khách hàng...</div>
+        ) : customers.length === 0 ? (
+          <div className="p-10 text-center text-sm text-gray-400">
+            Chưa có khách hàng nào. Bấm &quot;Thêm khách hàng&quot; để bắt đầu.
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr>
+                <th className="text-left px-5 py-3">Họ tên</th>
+                <th className="text-left px-5 py-3">Điện thoại</th>
+                <th className="text-left px-5 py-3">Email</th>
+                <th className="text-left px-5 py-3">Trạng thái</th>
+                <th className="text-left px-5 py-3">Tài khoản</th>
+                <th className="text-right px-5 py-3">Hành động</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {customers.map((customer) => (
+                <tr key={getCustomerId(customer)} className="hover:bg-gray-50/60 transition">
+                  <td className="px-5 py-3 font-bold text-gray-800">{customer.name}</td>
+                  <td className="px-5 py-3 text-gray-600 font-mono">{customer.phone}</td>
+                  <td className="px-5 py-3 text-gray-600">{customer.email || "—"}</td>
+                  <td className="px-5 py-3">
                     <span className="text-[10px] font-bold px-2 py-1 rounded-sm bg-teal-50 text-teal-700">
                       {customer.status}
                     </span>
-                      </td>
-                      <td className="px-5 py-3 text-gray-500 text-xs max-w-[200px] truncate">{customer.note || "—"}</td>
-                      <td className="px-5 py-3 text-right space-x-2">
-                        <button
-                            onClick={() => openEditForm(customer)}
-                            className="text-xs font-bold text-teal-700 hover:underline"
-                        >
-                          Sửa
-                        </button>
-                        <button
-                            onClick={() => handleDelete(customer)}
-                            className="text-xs font-bold text-red-600 hover:underline"
-                        >
-                          Xoá
-                        </button>
-                      </td>
-                    </tr>
-                ))}
-                </tbody>
-              </table>
-          )}
-        </div>
-
-        {/* MODAL FORM THÊM / SỬA KHÁCH HÀNG */}
-        {showForm && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 p-6">
-                <h3 className="font-bold text-teal-700 text-sm mb-4 flex items-center gap-2">
-                  {editingId ? "✏️ SỬA THÔNG TIN KHÁCH HÀNG" : "⚙️ THÊM KHÁCH HÀNG MỚI"}
-                </h3>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-500 mb-1">Họ tên *</label>
-                      <input
-                          type="text"
-                          value={form.name}
-                          onChange={(e) => setForm({ ...form, name: e.target.value })}
-                          className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-500 mb-1">Số điện thoại *</label>
-                      <input
-                          type="text"
-                          value={form.phone}
-                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                          className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-500 mb-1">Email</label>
-                      <input
-                          type="email"
-                          value={form.email}
-                          onChange={(e) => setForm({ ...form, email: e.target.value })}
-                          className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-500 mb-1">Trạng thái</label>
-                      <select
-                          value={form.status}
-                          onChange={(e) => setForm({ ...form, status: e.target.value })}
-                          className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500 bg-white"
-                      >
-                        <option value="Khách mới">Khách mới</option>
-                        <option value="Đang lưu trú">Đang lưu trú</option>
-                        <option value="Đã từng ở">Đã từng ở</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">Địa chỉ</label>
-                    <input
-                        type="text"
-                        value={form.address}
-                        onChange={(e) => setForm({ ...form, address: e.target.value })}
-                        className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">Ghi chú</label>
-                    <textarea
-                        rows={2}
-                        value={form.note}
-                        onChange={(e) => setForm({ ...form, note: e.target.value })}
-                        className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                        type="button"
-                        onClick={closeForm}
-                        className="flex-1 border border-gray-200 text-gray-600 font-bold text-xs py-3 rounded-lg hover:bg-gray-50 transition"
+                  </td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={`text-[10px] font-bold px-2 py-1 rounded-sm ${
+                        customer.isLocked ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-500"
+                      }`}
                     >
-                      Huỷ
+                      {customer.isLocked ? "Đã khoá" : "Hoạt động"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right space-x-2 whitespace-nowrap">
+                    <button onClick={() => openHistory(customer)} className="text-xs font-bold text-sky-600 hover:underline">
+                      Lịch sử
                     </button>
                     <button
-                        type="submit"
-                        disabled={saving}
-                        className="flex-1 bg-teal-700 hover:bg-teal-800 disabled:opacity-60 text-white font-bold text-xs py-3 rounded-lg transition shadow-xs uppercase tracking-wider"
+                      onClick={() => handleToggleLock(customer)}
+                      className="text-xs font-bold text-amber-600 hover:underline"
                     >
-                      {saving ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Thêm khách hàng"}
+                      {customer.isLocked ? "Mở khoá" : "Khoá"}
                     </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+                    <button onClick={() => openEditForm(customer)} className="text-xs font-bold text-teal-700 hover:underline">
+                      Sửa
+                    </button>
+                    <button onClick={() => handleDelete(customer)} className="text-xs font-bold text-red-600 hover:underline">
+                      Xoá
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* MODAL FORM THÊM / SỬA KHÁCH HÀNG */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 p-6">
+            <h3 className="font-bold text-teal-700 text-sm mb-4 flex items-center gap-2">
+              {editingId ? "✏️ SỬA THÔNG TIN KHÁCH HÀNG" : "⚙️ THÊM KHÁCH HÀNG MỚI"}
+            </h3>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">Họ tên *</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">Số điện thoại *</label>
+                  <input
+                    type="text"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">Trạng thái</label>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value })}
+                    className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500 bg-white"
+                  >
+                    <option value="Khách mới">Khách mới</option>
+                    <option value="Đang lưu trú">Đang lưu trú</option>
+                    <option value="Đã từng ở">Đã từng ở</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-1">Địa chỉ</label>
+                <input
+                  type="text"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-1">Ghi chú</label>
+                <textarea
+                  rows={2}
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                  className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-teal-500"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="flex-1 border border-gray-200 text-gray-600 font-bold text-xs py-3 rounded-lg hover:bg-gray-50 transition"
+                >
+                  Huỷ
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 bg-teal-700 hover:bg-teal-800 disabled:opacity-60 text-white font-bold text-xs py-3 rounded-lg transition shadow-xs uppercase tracking-wider"
+                >
+                  {saving ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Thêm khách hàng"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LỊCH SỬ ĐẶT PHÒNG */}
+      {historyCustomer && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-teal-700 text-sm">Lịch sử đặt phòng — {historyCustomer.name}</h3>
+              <button onClick={() => setHistoryCustomer(null)} className="text-xs text-gray-400 hover:text-gray-600">
+                ✕
+              </button>
+            </div>
+
+            {historyLoading ? (
+              <p className="text-xs text-gray-400 text-center py-6">Đang tải...</p>
+            ) : history.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6">Khách hàng này chưa có lịch sử đặt phòng.</p>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {history.map((h) => (
+                  <div key={h.id} className="border border-gray-100 rounded-xl p-3 text-xs">
+                    <p className="font-bold text-gray-800">{h.roomName || "Phòng"}</p>
+                    <p className="text-gray-500">
+                      {new Date(h.checkIn).toLocaleDateString("vi-VN")} — {new Date(h.checkOut).toLocaleDateString("vi-VN")}
+                    </p>
+                    <p className="text-green-600 font-semibold">{h.totalPrice?.toLocaleString("vi-VN")}đ</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

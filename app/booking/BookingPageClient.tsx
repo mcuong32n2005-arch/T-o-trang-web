@@ -4,6 +4,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
+import { isFavorite, toggleFavorite } from '../account/_lib/favorites';
 
 // ─── DATE PICKER COMPONENT ───────────────────────────────────────────────────
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
@@ -201,6 +202,63 @@ interface HomestayRoom {
     images?: string[];
 }
 
+// ─── Nút tim yêu thích — dùng chung cho mọi card phòng trong trang này.
+// Đọc/ghi qua API /api/favorites (lưu theo userId trong MongoDB — mỗi tài
+// khoản có danh sách riêng), tự đổi màu/biểu tượng theo trạng thái đã/chưa
+// yêu thích, và chặn click lan ra card (không mở trang chi tiết phòng khi
+// bấm tim). ───────────────────────────────────────────────────────────────
+function FavoriteButton({ room, className }: { room: HomestayRoom; className?: string }) {
+    const [favorited, setFavorited] = useState(false);
+    const [pending, setPending] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+        isFavorite(room.id).then((result) => {
+            if (active) setFavorited(result);
+        });
+        return () => {
+            active = false;
+        };
+    }, [room.id]);
+
+    const handleClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (pending) return;
+        setPending(true);
+        try {
+            const nowFavorited = await toggleFavorite({
+                id: room.id,
+                code: room.code,
+                name: room.name,
+                price: room.price,
+                image: room.images?.[0],
+                address: room.address?.fullAddress,
+            });
+            setFavorited(nowFavorited);
+        } finally {
+            setPending(false);
+        }
+    };
+
+    return (
+        <button
+            onClick={handleClick}
+            disabled={pending}
+            className={className || "absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow hover:scale-110 transition disabled:opacity-60"}
+            title={favorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+        >
+            <svg
+                className={`w-4 h-4 transition ${favorited ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}
+                fill={favorited ? "currentColor" : "none"}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+        </button>
+    );
+}
+
 const LOCATIONS = [
     { name: "Bảo An - Cơ sở 1", rooms: "12 phòng", key: "Bảo An - Cơ sở 1" },
     { name: "Bảo An - Cơ sở 5", rooms: "30 phòng", key: "Bảo An - Cơ sở 5" },
@@ -296,7 +354,6 @@ function AuthMenuLoggedIn({ userRole }: { userRole?: "admin" | "user" | null }) 
         { icon: "reward", label: "Điểm thưởng và ưu đãi", href: "/account/rewards" },
         { icon: "heart", label: "Phòng yêu thích", href: "/account/favorites" },
         { icon: "booking", label: "Quản lý đặt phòng", href: "/account/bookings" },
-        { icon: "prepay", label: "Gói trả trước", href: "/account/prepay" },
     ];
 
     return (
@@ -397,11 +454,6 @@ function HamburgerIcon({ type }: { type: string }) {
         case "booking": return (
             <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-        );
-        case "prepay": return (
-            <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
         );
         default: return null;
@@ -839,14 +891,7 @@ export default function HomePageClient({
                               </span>
                                             </div>
                                             {/* Nút yêu thích */}
-                                            <button
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow hover:scale-110 transition"
-                                            >
-                                                <svg className="w-4 h-4 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                </svg>
-                                            </button>
+                                            <FavoriteButton room={room} />
                                         </div>
 
                                         {/* Nội dung card */}

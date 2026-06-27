@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
 
 interface Booking {
     id: string;
@@ -41,11 +40,6 @@ function formatDateTime(value: string) {
 }
 
 export default function MyBookingsPage() {
-    // Theo dõi user hiện tại từ Clerk. Nếu userId thay đổi (vd: đăng xuất rồi
-    // đăng nhập tài khoản khác trong cùng tab mà không reload trang), ta phải
-    // chủ động xoá state cũ và tải lại danh sách — nếu không, React vẫn giữ
-    // nguyên danh sách booking của tài khoản trước đó trong bộ nhớ.
-    const { user, isLoaded } = useUser();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -55,9 +49,11 @@ export default function MyBookingsPage() {
         setLoading(true);
         setError("");
         try {
-            const res = await fetch("/api/bookings", { cache: "no-store" });
+            const res = await fetch("/api/bookings");
             if (res.status === 401) {
-                window.location.href = "/sign-in?redirect=/account/bookings";
+                // Đổi từ /dashboard/bookings (cũ) sang /account/bookings vì khu vực
+                // /dashboard giờ chỉ dành cho admin.
+                window.location.href = "/login?redirect=/account/bookings";
                 return;
             }
             const data = await res.json();
@@ -75,17 +71,8 @@ export default function MyBookingsPage() {
     };
 
     useEffect(() => {
-        // Chờ Clerk load xong thông tin user trước khi gọi API, và mỗi khi
-        // user.id thay đổi (đổi tài khoản), xoá state cũ + tải lại từ đầu.
-        if (!isLoaded) return;
-        setBookings([]);
-        if (!user) {
-            window.location.href = "/sign-in?redirect=/account/bookings";
-            return;
-        }
         loadBookings();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoaded, user?.id]);
+    }, []);
 
     const handleCancel = async (id: string) => {
         if (!window.confirm("Bạn chắc chắn muốn huỷ đơn đặt phòng này?")) return;
