@@ -3,7 +3,8 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { requireAdmin } from "@/lib/requireAdmin";
 
-// POST: nhận 1 file ảnh, lưu vào public/uploads/rooms, trả về URL để lưu vào room.images
+// POST: nhận 1 file ảnh, lưu vào thư mục uploads/rooms NGOÀI public/, trả về
+// URL dạng /api/uploads/rooms/<file> để lưu vào room.images.
 export async function POST(request: Request) {
     const admin = await requireAdmin();
     if (!admin) {
@@ -37,15 +38,14 @@ export async function POST(request: Request) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Đặt tên file ngẫu nhiên để tránh trùng / đè ảnh cũ
         const ext = path.extname(file.name) || ".jpg";
         const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
 
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "rooms");
+        const uploadDir = path.join(process.cwd(), "uploads", "rooms");
         await mkdir(uploadDir, { recursive: true });
         await writeFile(path.join(uploadDir, fileName), buffer);
 
-        const url = `/uploads/rooms/${fileName}`;
+        const url = `/api/uploads/rooms/${fileName}`;
 
         return NextResponse.json({ message: "Tải ảnh lên thành công.", url });
     } catch (error) {

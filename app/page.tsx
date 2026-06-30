@@ -2,6 +2,11 @@ import { auth } from "@clerk/nextjs/server";
 import { getDb } from "@/lib/mongodb";
 import HomePageClient from "./HomePageClient";
 
+// Luôn lấy dữ liệu phòng mới nhất, không cache route này — tránh tình trạng
+// trang chủ hiện dữ liệu/ảnh cũ do Next.js Router Cache khi điều hướng
+// bằng <Link> giữa các trang.
+export const dynamic = "force-dynamic";
+
 async function getRooms() {
   const db = await getDb();
   const rooms = await db.collection("rooms").find().sort({ createdAt: -1 }).toArray();

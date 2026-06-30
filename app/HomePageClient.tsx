@@ -2,9 +2,11 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { isFavorite, toggleFavorite } from './account/_lib/favorites';
+import type { Roles } from '@/types/globals';
 
 // ─── DATE PICKER COMPONENT ───────────────────────────────────────────────────
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
@@ -14,12 +16,10 @@ function DatePickerPopup({
                            value,
                            onChange,
                            onClose,
-                           label,
                          }: {
   value: string;
   onChange: (val: string) => void;
   onClose: () => void;
-  label: string;
 }) {
   const today = new Date();
   const initial = value ? new Date(value) : today;
@@ -176,7 +176,6 @@ function DateField({
                 value={value}
                 onChange={(v) => { onChange(v); setOpen(false); }}
                 onClose={() => setOpen(false)}
-                label={label}
             />
         )}
       </div>
@@ -207,11 +206,14 @@ interface HomestayRoom {
 // khoản có danh sách riêng), tự đổi màu/biểu tượng theo trạng thái đã/chưa
 // yêu thích, và chặn click lan ra card (không mở trang chi tiết phòng khi
 // bấm tim). ───────────────────────────────────────────────────────────────
-function FavoriteButton({ room }: { room: HomestayRoom }) {
+function FavoriteButton({ room, isLoggedIn }: { room: HomestayRoom; isLoggedIn: boolean }) {
   const [favorited, setFavorited] = useState(false);
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
+    // Chưa đăng nhập thì không gọi API /api/favorites — tránh bị middleware/
+    // route handler trả 401 cho từng phòng, gây chậm trang (mỗi card 1 request).
+    if (!isLoggedIn) return;
     let active = true;
     isFavorite(room.id).then((result) => {
       if (active) setFavorited(result);
@@ -219,11 +221,21 @@ function FavoriteButton({ room }: { room: HomestayRoom }) {
     return () => {
       active = false;
     };
-  }, [room.id]);
+  }, [room.id, isLoggedIn]);
+
+  // Không cần reset `favorited` về false trong effect khi đăng xuất (gây
+  // setState đồng bộ trong effect) — chỉ cần không hiển thị trạng thái yêu
+  // thích khi chưa đăng nhập.
+  const showFavorited = isLoggedIn && favorited;
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (pending) return;
+    if (!isLoggedIn) {
+      // Khách chưa đăng nhập bấm tim -> đưa sang trang đăng nhập thay vì gọi API lỗi
+      window.location.href = "/sign-in";
+      return;
+    }
     setPending(true);
     try {
       const nowFavorited = await toggleFavorite({
@@ -241,27 +253,27 @@ function FavoriteButton({ room }: { room: HomestayRoom }) {
   };
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={pending}
-      className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow hover:scale-110 transition disabled:opacity-60"
-      title={favorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
-    >
-      <svg
-        className={`w-4 h-4 transition ${favorited ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}
-        fill={favorited ? "currentColor" : "none"}
-        stroke="currentColor"
-        viewBox="0 0 24 24"
+      <button
+          onClick={handleClick}
+          disabled={pending}
+          className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow hover:scale-110 transition disabled:opacity-60"
+          title={showFavorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
       >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-      </svg>
-    </button>
+        <svg
+            className={`w-4 h-4 transition ${showFavorited ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}
+            fill={showFavorited ? "currentColor" : "none"}
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      </button>
   );
 }
 
 const LOCATIONS = [
-  { name: "Bảo An - Cơ sở 1", rooms: "12 phòng", key: "Bảo An - Cơ sở 1" },
-  { name: "Bảo An - Cơ sở 5", rooms: "30 phòng", key: "Bảo An - Cơ sở 5" },
+  { name: "Bảo An - Cơ sở 1", rooms: "12 phòng", key: "Bảo An - Cơ sở 1", image: "/images/cs1.jpg" },
+  { name: "Bảo An - Cơ sở 5", rooms: "30 phòng", key: "Bảo An - Cơ sở 5", image: "/images/cs5.jpg" },
 ];
 
 const HELP_ITEMS = [
@@ -317,6 +329,17 @@ function BuildingIcon() {
   );
 }
 
+// Thẻ thu nhỏ hiển thị ảnh thật của cơ sở. Nếu chưa có ảnh (chưa thêm vào
+// /public/images) thì rơi về icon toà nhà mặc định để không vỡ giao diện.
+function LocationThumb({ src, alt }: { src?: string; alt: string }) {
+  if (!src) return <BuildingIcon />;
+  return (
+      <div className="w-16 h-12 rounded-lg overflow-hidden relative shrink-0">
+        <Image src={src} alt={alt} fill sizes="64px" className="object-cover" />
+      </div>
+  );
+}
+
 const FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80",
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80",
@@ -338,7 +361,7 @@ export default function HomePageClient({
                                        }: {
   initialRooms: HomestayRoom[];
   isLoggedIn?: boolean;
-  userRole?: "admin" | "user" | null;
+  userRole?: Roles | null;
 }) {
   const router = useRouter();
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -489,7 +512,7 @@ export default function HomePageClient({
                               : "border-gray-200 hover:border-gray-300"
                       }`}
                   >
-                    <BuildingIcon />
+                    <LocationThumb src={loc.image} alt={loc.name} />
                     <span className="font-semibold text-xs text-gray-800 mt-2 text-center leading-tight">{loc.name}</span>
                     <span className="text-[11px] text-gray-400 mt-0.5">{loc.rooms}</span>
                   </button>
@@ -565,19 +588,26 @@ export default function HomePageClient({
                         >
                           {/* Hình ảnh */}
                           <div className="relative h-48 bg-gray-100 overflow-hidden">
-                            <img
+                            <Image
                                 src={room.images?.[0] || getFallbackImage(room.roomType?.name, idx)}
                                 alt={room.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                                fill
+                                sizes="(max-width: 768px) 50vw, 300px"
+                                className="object-cover group-hover:scale-105 transition duration-500"
                             />
                             {/* Badges trên ảnh */}
                             <div className="absolute top-2 left-2 flex items-center gap-1.5">
                               <span className="bg-gray-800 text-white text-[10px] font-bold px-2 py-0.5 rounded">
                                 {room.code || `R${1000 + idx}`}
                               </span>
+                              {!isAvailable && (
+                                  <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                                    Hết phòng
+                                  </span>
+                              )}
                             </div>
                             {/* Nút yêu thích */}
-                            <FavoriteButton room={room} />
+                            <FavoriteButton room={room} isLoggedIn={isLoggedIn} />
                           </div>
 
                           {/* Nội dung card */}

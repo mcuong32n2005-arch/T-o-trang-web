@@ -25,6 +25,9 @@ export default function SignUpPage() {
 
             <SignUp
                 appearance={{
+                    variables: {
+                        fontFamily: "var(--font-geist-sans), sans-serif",
+                    },
                     elements: {
                         card: "shadow-md border border-gray-200 rounded-2xl",
                         formButtonPrimary:

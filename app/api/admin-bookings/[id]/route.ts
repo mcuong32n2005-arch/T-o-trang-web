@@ -45,15 +45,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     // Đổi phòng: body chứa roomId mới
     if (body.roomId && !body.action) {
       await db.collection("bookings").updateOne(
-        { _id: new ObjectId(id) },
-        {
-          $set: {
-            roomId: body.roomId,
-            roomName: body.roomName || "",
-            roomCode: body.roomCode || "",
-            updatedAt: new Date(),
-          },
-        }
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              roomId: body.roomId,
+              roomName: body.roomName || "",
+              roomCode: body.roomCode || "",
+              updatedAt: new Date(),
+            },
+          }
       );
       await logAction({ actorId: admin.userId, action: "Đã đổi phòng cho booking", target: id });
       return NextResponse.json({ message: "Đã đổi phòng cho booking." });
@@ -69,8 +69,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     await db.collection("bookings").updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { status: ACTION_TO_STATUS[action], updatedAt: new Date() } }
+        { _id: new ObjectId(id) },
+        { $set: { status: ACTION_TO_STATUS[action], updatedAt: new Date() } }
     );
 
     await logAction({
@@ -90,6 +90,40 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ message: "Đã cập nhật trạng thái booking." });
   } catch (error) {
     console.error("Lỗi xử lý booking (admin):", error);
+    return NextResponse.json({ message: "Lỗi hệ thống." }, { status: 500 });
+  }
+}
+
+// DELETE: xoá booking đã huỷ
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ message: "Bạn cần đăng nhập với quyền admin." }, { status: 401 });
+  }
+
+  const { id } = await params;
+  if (!ObjectId.isValid(id)) {
+    return NextResponse.json({ message: "Mã booking không hợp lệ." }, { status: 400 });
+  }
+
+  try {
+    const db = await getDb();
+    const booking = await db.collection("bookings").findOne({ _id: new ObjectId(id) });
+
+    if (!booking) {
+      return NextResponse.json({ message: "Không tìm thấy booking này." }, { status: 404 });
+    }
+
+    if (booking.status !== "cancelled") {
+      return NextResponse.json({ message: "Chỉ được xoá booking đã huỷ." }, { status: 400 });
+    }
+
+    await db.collection("bookings").deleteOne({ _id: new ObjectId(id) });
+    await logAction({ actorId: admin.userId, action: "Đã xoá booking đã huỷ", target: id });
+
+    return NextResponse.json({ message: "Đã xoá booking." });
+  } catch (error) {
+    console.error("Lỗi xoá booking:", error);
     return NextResponse.json({ message: "Lỗi hệ thống." }, { status: 500 });
   }
 }

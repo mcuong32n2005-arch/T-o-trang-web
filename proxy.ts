@@ -19,7 +19,9 @@ const isPublicRoute = createRouteMatcher([
   "/host",
   "/payment-guide",
   "/api/rooms(.*)",      // GET danh sách/chi tiết phòng công khai (route.ts đã tự chặn POST/PUT/DELETE)
+  "/api/uploads(.*)",    // GET ảnh đã upload (phòng, cơ sở...) — ảnh công khai, ai cũng xem được, không cần đăng nhập
   "/api/bookings(.*)",   // route handler tự kiểm tra đăng nhập và trả 401 đúng ý — không để middleware chặn cứng ở đây
+  "/api/favorites(.*)",  // route handler tự kiểm tra đăng nhập và trả 401 JSON — tránh middleware redirect HTML chậm sang /sign-in khi khách chưa đăng nhập bấm tim trên nhiều card phòng cùng lúc
 ]);
 
 // Route chỉ admin (publicMetadata.role === "admin") mới được vào

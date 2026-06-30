@@ -2,6 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import { getDb } from "@/lib/mongodb";
 import BookingPageClient from "./BookingPageClient";
 
+// Luôn lấy dữ liệu phòng mới nhất, không cache route này.
+export const dynamic = "force-dynamic";
+
 async function getRooms() {
     const db = await getDb();
     const rooms = await db.collection("rooms").find().sort({ createdAt: -1 }).toArray();

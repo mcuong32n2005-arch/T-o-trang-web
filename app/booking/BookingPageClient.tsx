@@ -2,9 +2,11 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 import { isFavorite, toggleFavorite } from '../account/_lib/favorites';
+import type { Roles } from '@/types/globals';
 
 // ─── DATE PICKER COMPONENT ───────────────────────────────────────────────────
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
@@ -207,11 +209,14 @@ interface HomestayRoom {
 // khoản có danh sách riêng), tự đổi màu/biểu tượng theo trạng thái đã/chưa
 // yêu thích, và chặn click lan ra card (không mở trang chi tiết phòng khi
 // bấm tim). ───────────────────────────────────────────────────────────────
-function FavoriteButton({ room, className }: { room: HomestayRoom; className?: string }) {
+function FavoriteButton({ room, className, isLoggedIn }: { room: HomestayRoom; className?: string; isLoggedIn: boolean }) {
     const [favorited, setFavorited] = useState(false);
     const [pending, setPending] = useState(false);
 
     useEffect(() => {
+        // Chưa đăng nhập thì không gọi API /api/favorites — tránh bị middleware
+        // redirect sang /sign-in cho từng phòng, gây chậm trang (mỗi card 1 request).
+        if (!isLoggedIn) return;
         let active = true;
         isFavorite(room.id).then((result) => {
             if (active) setFavorited(result);
@@ -219,11 +224,16 @@ function FavoriteButton({ room, className }: { room: HomestayRoom; className?: s
         return () => {
             active = false;
         };
-    }, [room.id]);
+    }, [room.id, isLoggedIn]);
 
     const handleClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (pending) return;
+        if (!isLoggedIn) {
+            // Khách chưa đăng nhập bấm tim -> đưa sang trang đăng nhập thay vì gọi API lỗi
+            window.location.href = "/sign-in";
+            return;
+        }
         setPending(true);
         try {
             const nowFavorited = await toggleFavorite({
@@ -260,8 +270,8 @@ function FavoriteButton({ room, className }: { room: HomestayRoom; className?: s
 }
 
 const LOCATIONS = [
-    { name: "Bảo An - Cơ sở 1", rooms: "12 phòng", key: "Bảo An - Cơ sở 1" },
-    { name: "Bảo An - Cơ sở 5", rooms: "30 phòng", key: "Bảo An - Cơ sở 5" },
+    { name: "Bảo An - Cơ sở 1", rooms: "12 phòng", key: "Bảo An - Cơ sở 1", image: "/images/cs1.jpg" },
+    { name: "Bảo An - Cơ sở 5", rooms: "30 phòng", key: "Bảo An - Cơ sở 5", image: "/images/cs5.jpg" },
 ];
 
 const HELP_ITEMS = [
@@ -317,6 +327,17 @@ function BuildingIcon() {
     );
 }
 
+// Thẻ thu nhỏ hiển thị ảnh thật của cơ sở. Nếu chưa có ảnh (chưa thêm vào
+// /public/images) thì rơi về icon toà nhà mặc định để không vỡ giao diện.
+function LocationThumb({ src, alt }: { src?: string; alt: string }) {
+    if (!src) return <BuildingIcon />;
+    return (
+        <div className="w-16 h-12 rounded-lg overflow-hidden relative shrink-0">
+            <Image src={src} alt={alt} fill sizes="64px" className="object-cover" />
+        </div>
+    );
+}
+
 const FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80",
     "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80",
@@ -332,7 +353,7 @@ function getFallbackImage(roomTypeName: string, idx: number) {
 }
 
 // ─── AUTH MENU (LOGGED IN) ──────────────────────────────────────────────────
-function AuthMenuLoggedIn({ userRole }: { userRole?: "admin" | "user" | null }) {
+function AuthMenuLoggedIn({ userRole }: { userRole?: Roles | null }) {
     const router = useRouter();
     const { signOut } = useClerk();
     const [hamburgerOpen, setHamburgerOpen] = useState(false);
@@ -523,8 +544,9 @@ function BookingModal({
                 throw new Error(data?.message || "Đặt phòng thất bại. Vui lòng thử lại.");
             }
             setSuccess(true);
-        } catch (e: any) {
-            setError(e.message || "Có lỗi xảy ra.");
+        } catch (e) {
+            const error = e as { message?: string };
+            setError(error?.message || "Có lỗi xảy ra.");
         } finally {
             setLoading(false);
         }
@@ -654,7 +676,7 @@ export default function HomePageClient({
                                        }: {
     initialRooms: HomestayRoom[];
     isLoggedIn?: boolean;
-    userRole?: "admin" | "user" | null;
+    userRole?: Roles | null;
 }) {
     const router = useRouter();
     const carouselRef = useRef<HTMLDivElement>(null);
@@ -803,7 +825,7 @@ export default function HomePageClient({
                                         : "border-gray-200 hover:border-gray-300"
                                 }`}
                             >
-                                <BuildingIcon />
+                                <LocationThumb src={loc.image} alt={loc.name} />
                                 <span className="font-semibold text-xs text-gray-800 mt-2 text-center leading-tight">{loc.name}</span>
                                 <span className="text-[11px] text-gray-400 mt-0.5">{loc.rooms}</span>
                             </button>
@@ -891,7 +913,7 @@ export default function HomePageClient({
                               </span>
                                             </div>
                                             {/* Nút yêu thích */}
-                                            <FavoriteButton room={room} />
+                                            <FavoriteButton room={room} isLoggedIn={isLoggedIn} />
                                         </div>
 
                                         {/* Nội dung card */}
