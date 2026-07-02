@@ -1,9 +1,11 @@
 "use client";
 
-import React, { Suspense, useMemo, useState, useEffect } from "react";
+import React, { Suspense, useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { isFavorite, toggleFavorite } from "../account/_lib/favorites";
+import { useUser } from "@clerk/nextjs";
+import { getFavorites, toggleFavorite } from "../account/_lib/favorites";
+import { isRoomAvailable } from "@/lib/roomStatus";
 
 // ─── KIỂU DỮ LIỆU ────────────────────────────────────────────────────────────
 interface HomestayRoom {
@@ -26,38 +28,46 @@ interface HomestayRoom {
 }
 
 // ─── Nút tim yêu thích — dùng chung cho mọi card phòng trong trang này.
-// Đọc/ghi qua API /api/favorites (lưu theo userId trong MongoDB — mỗi tài
-// khoản có danh sách riêng), tự đổi màu/biểu tượng theo trạng thái đã/chưa
-// yêu thích, và chặn click lan ra card (không mở trang chi tiết phòng khi
-// bấm tim). ───────────────────────────────────────────────────────────────
-function FavoriteButton({ room }: { room: HomestayRoom }) {
-  const [favorited, setFavorited] = useState(false);
+// Trạng thái đã/chưa yêu thích được truyền từ component cha qua prop
+// `favorited` (cha chỉ gọi API /api/favorites 1 LẦN DUY NHẤT cho toàn bộ
+// danh sách, thay vì để mỗi nút tự fetch riêng — cách cũ gây ra hàng chục
+// request /api/favorites chạy song song mỗi khi tải trang, làm trang chậm
+// hẳn). Khi bấm, gọi `onToggle` để cha cập nhật lại Set chung. ─────────────
+function FavoriteButton({
+                          room,
+                          isLoggedIn,
+                          favorited,
+                          onToggle,
+                        }: {
+  room: HomestayRoom;
+  isLoggedIn: boolean;
+  favorited: boolean;
+  onToggle: (roomId: string, nowFavorited: boolean) => void;
+}) {
   const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    isFavorite(room.id).then((result) => {
-      if (active) setFavorited(result);
-    });
-    return () => {
-      active = false;
-    };
-  }, [room.id]);
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (pending) return;
+    if (!isLoggedIn) {
+      // Khách chưa đăng nhập bấm tim -> đưa sang trang đăng nhập thay vì gọi API lỗi
+      window.location.href = "/sign-in";
+      return;
+    }
     setPending(true);
     try {
-      const nowFavorited = await toggleFavorite({
-        id: room.id,
-        code: room.code,
-        name: room.name,
-        price: room.price,
-        image: room.images?.[0],
-        address: room.address?.fullAddress,
-      });
-      setFavorited(nowFavorited);
+      const nowFavorited = await toggleFavorite(
+          {
+            id: room.id,
+            code: room.code,
+            name: room.name,
+            price: room.price,
+            image: room.images?.[0],
+            address: room.address?.fullAddress,
+          },
+          favorited // truyền sẵn trạng thái hiện tại, khỏi phải fetch lại để kiểm tra
+      );
+      onToggle(room.id, nowFavorited);
     } finally {
       setPending(false);
     }
@@ -112,6 +122,34 @@ function matchKeyword(room: HomestayRoom, keyword: string) {
 function SearchResults({ initialRooms }: { initialRooms: HomestayRoom[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isSignedIn } = useUser();
+  const isLoggedIn = !!isSignedIn;
+
+  // Danh sách phòng yêu thích — CHỈ tải 1 LẦN DUY NHẤT ở đây cho toàn bộ trang,
+  // rồi truyền xuống từng FavoriteButton qua Set, thay vì để mỗi nút tự gọi
+  // API riêng khi mount (trước đây gây hàng chục request /api/favorites chạy
+  // song song, làm trang tải rất chậm).
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let active = true;
+    getFavorites().then((list) => {
+      if (active) setFavoriteIds(new Set(list.map((f) => f.id)));
+    });
+    return () => {
+      active = false;
+    };
+  }, [isLoggedIn]);
+
+  const handleFavoriteToggle = useCallback((roomId: string, nowFavorited: boolean) => {
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (nowFavorited) next.add(roomId);
+      else next.delete(roomId);
+      return next;
+    });
+  }, []);
 
   const q = searchParams.get("q") || "";
   const checkIn = searchParams.get("checkIn") || "";
@@ -214,10 +252,7 @@ function SearchResults({ initialRooms }: { initialRooms: HomestayRoom[] }) {
           ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredRooms.map((room, idx) => {
-                  const isAvailable =
-                      room.status === "available" ||
-                      room.status === "AVAILABLE" ||
-                      room.status === "Sẵn sàng";
+                  const isAvailable = isRoomAvailable(room.status);
 
                   return (
                       <div
@@ -242,7 +277,12 @@ function SearchResults({ initialRooms }: { initialRooms: HomestayRoom[] }) {
                         </span>
                             )}
                           </div>
-                          <FavoriteButton room={room} />
+                          <FavoriteButton
+                              room={room}
+                              isLoggedIn={isLoggedIn}
+                              favorited={favoriteIds.has(room.id)}
+                              onToggle={handleFavoriteToggle}
+                          />
                         </div>
 
                         {/* Nội dung card */}

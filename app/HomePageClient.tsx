@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 import { getFavorites, toggleFavorite } from './account/_lib/favorites';
 import { isRoomAvailable } from '@/lib/roomStatus';
@@ -593,6 +593,7 @@ export default function HomePageClient({
   userRole?: Roles | null;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const [selectedBranch, setSelectedBranch] = useState("all");
@@ -619,6 +620,19 @@ export default function HomePageClient({
       active = false;
     };
   }, [isLoggedIn]);
+
+  // Khi user đến từ trang /locations (bấm chọn 1 cơ sở cụ thể), URL sẽ có
+  // dạng /?branch=Bảo+An+-+Cơ+sở+5 — tự động chọn cơ sở đó trong bộ lọc và
+  // cuộn xuống khu Homestay để user thấy ngay kết quả, khỏi phải tự bấm lại.
+  useEffect(() => {
+    const branch = searchParams.get("branch");
+    if (branch) {
+      setSelectedBranch(branch);
+      setTimeout(() => {
+        document.getElementById("homestay")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    }
+  }, [searchParams]);
 
   const handleFavoriteToggle = (roomId: string, nowFavorited: boolean) => {
     setFavoriteIds((prev) => {
@@ -790,11 +804,20 @@ export default function HomePageClient({
         {/* ═══════════════════════════════════════════
           HOMESTAY — carousel card section
       ═══════════════════════════════════════════ */}
-        <section className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+        <section id="homestay" className="max-w-7xl mx-auto px-4 md:px-8 py-8">
           {/* Tiêu đề section + điều hướng */}
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-bold text-gray-900">Homestay</h2>
             <div className="flex items-center gap-3">
+              <Link
+                  href="/locations"
+                  className="text-sm font-semibold text-gray-600 hover:text-green-600 hover:underline flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m-1 4h1m4-4h1m-1 4h1M9 21v-4a1 1 0 011-1h4a1 1 0 011 1v4" />
+                </svg>
+                {LOCATIONS.length} cơ sở
+              </Link>
               <Link href="/rooms" className="text-sm font-semibold text-green-600 hover:underline">
                 Xem thêm
               </Link>
