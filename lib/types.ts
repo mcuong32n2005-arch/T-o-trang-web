@@ -89,12 +89,28 @@ export interface ContactMessage {
   createdAt: string;
 }
 
+// Thông báo nội bộ dành cho ADMIN (không có recipientId — mọi admin đều thấy chung).
+export type AdminNotificationType = "new_booking" | "cancel_booking" | "payment" | "new_review";
+
+// Thông báo dành riêng cho một KHÁCH HÀNG cụ thể (có recipientId = userId của khách).
+// Bắn ra khi admin thao tác trên đơn đặt phòng của khách đó.
+export type CustomerNotificationType =
+    | "booking_confirmed" // admin xác nhận đơn
+    | "booking_cancelled" // admin huỷ đơn
+    | "checked_in" // admin check-in cho khách
+    | "checked_out"; // admin check-out cho khách
+
+export type NotificationType = AdminNotificationType | CustomerNotificationType;
+
 export interface NotificationItem {
   id: string;
-  type: "new_booking" | "cancel_booking" | "payment" | "new_review";
+  type: NotificationType;
   message: string;
   isRead: boolean;
   relatedId?: string;
+  // Nếu có giá trị: thông báo riêng cho khách hàng có userId này.
+  // Nếu để trống/undefined: thông báo dùng chung cho admin (giữ hành vi cũ).
+  recipientId?: string;
   createdAt: string;
 }
 

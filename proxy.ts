@@ -22,6 +22,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/uploads(.*)",    // GET ảnh đã upload (phòng, cơ sở...) — ảnh công khai, ai cũng xem được, không cần đăng nhập
   "/api/bookings(.*)",   // route handler tự kiểm tra đăng nhập và trả 401 đúng ý — không để middleware chặn cứng ở đây
   "/api/favorites(.*)",  // route handler tự kiểm tra đăng nhập và trả 401 JSON — tránh middleware redirect HTML chậm sang /sign-in khi khách chưa đăng nhập bấm tim trên nhiều card phòng cùng lúc
+  "/api/settings(.*)",   // GET cài đặt hệ thống (logo, mạng xã hội...) hiển thị công khai ở trang chủ — khách chưa đăng nhập cũng cần đọc được
 ]);
 
 // Route chỉ admin (publicMetadata.role === "admin") mới được vào

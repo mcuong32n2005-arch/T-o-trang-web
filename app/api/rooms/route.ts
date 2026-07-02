@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import { requireAdmin } from "@/lib/requireAdmin";
+import { normalizeRoomStatus, ROOM_STATUS } from "@/lib/roomStatus";
 
 // GET: lấy danh sách phòng — để công khai vì trang chủ (khách xem phòng) cũng cần gọi API này
 export async function GET() {
@@ -52,7 +53,11 @@ export async function POST(request: Request) {
       bedCount: Number(body.bedCount) || 1,
       bathroomCount: Number(body.bathroomCount) || 1,
       amenities: Array.isArray(body.amenities) ? body.amenities : [],
-      status: body.status || "available",
+      // Chuẩn hoá về "available" | "occupied" | giữ nguyên nếu là trạng thái tuỳ
+      // chỉnh khác (vd "Bảo trì") — để mọi nơi đọc room.status (badge "Hết phòng"
+      // ở trang khách hàng, logic đồng bộ theo booking) đều hiểu cùng 1 kiểu giá
+      // trị, bất kể form nhập bằng nhãn tiếng Việt gì ("Trống", "Còn phòng"...).
+      status: normalizeRoomStatus(body.status) || ROOM_STATUS.AVAILABLE,
       price: Number(body.price),
       roomType: body.roomType || { id: "type-" + Date.now(), name: "standard" },
       property: body.property,

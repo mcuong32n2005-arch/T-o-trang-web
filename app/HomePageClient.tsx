@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { UserButton } from '@clerk/nextjs';
-import { isFavorite, toggleFavorite } from './account/_lib/favorites';
+import { useClerk } from '@clerk/nextjs';
+import { getFavorites, toggleFavorite } from './account/_lib/favorites';
+import { isRoomAvailable } from '@/lib/roomStatus';
 import type { Roles } from '@/types/globals';
 
 // ─── DATE PICKER COMPONENT ───────────────────────────────────────────────────
@@ -202,30 +203,24 @@ interface HomestayRoom {
 }
 
 // ─── Nút tim yêu thích — dùng chung cho mọi card phòng trong trang này.
-// Đọc/ghi qua API /api/favorites (lưu theo userId trong MongoDB — mỗi tài
-// khoản có danh sách riêng), tự đổi màu/biểu tượng theo trạng thái đã/chưa
-// yêu thích, và chặn click lan ra card (không mở trang chi tiết phòng khi
-// bấm tim). ───────────────────────────────────────────────────────────────
-function FavoriteButton({ room, isLoggedIn }: { room: HomestayRoom; isLoggedIn: boolean }) {
-  const [favorited, setFavorited] = useState(false);
+// Trạng thái đã/chưa yêu thích được truyền từ component cha qua prop
+// `favorited` (cha chỉ gọi API /api/favorites 1 LẦN DUY NHẤT cho toàn bộ
+// danh sách, thay vì để mỗi nút tự fetch riêng — trước đây cách cũ gây ra
+// hàng chục request /api/favorites chạy song song mỗi khi tải trang, làm
+// trang chậm hẳn). Khi bấm, gọi `onToggle` để cha cập nhật lại Set chung.
+function FavoriteButton({
+                          room,
+                          isLoggedIn,
+                          favorited,
+                          onToggle,
+                        }: {
+  room: HomestayRoom;
+  isLoggedIn: boolean;
+  favorited: boolean;
+  onToggle: (roomId: string, nowFavorited: boolean) => void;
+}) {
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    // Chưa đăng nhập thì không gọi API /api/favorites — tránh bị middleware/
-    // route handler trả 401 cho từng phòng, gây chậm trang (mỗi card 1 request).
-    if (!isLoggedIn) return;
-    let active = true;
-    isFavorite(room.id).then((result) => {
-      if (active) setFavorited(result);
-    });
-    return () => {
-      active = false;
-    };
-  }, [room.id, isLoggedIn]);
-
-  // Không cần reset `favorited` về false trong effect khi đăng xuất (gây
-  // setState đồng bộ trong effect) — chỉ cần không hiển thị trạng thái yêu
-  // thích khi chưa đăng nhập.
   const showFavorited = isLoggedIn && favorited;
 
   const handleClick = async (e: React.MouseEvent) => {
@@ -238,15 +233,18 @@ function FavoriteButton({ room, isLoggedIn }: { room: HomestayRoom; isLoggedIn: 
     }
     setPending(true);
     try {
-      const nowFavorited = await toggleFavorite({
-        id: room.id,
-        code: room.code,
-        name: room.name,
-        price: room.price,
-        image: room.images?.[0],
-        address: room.address?.fullAddress,
-      });
-      setFavorited(nowFavorited);
+      const nowFavorited = await toggleFavorite(
+          {
+            id: room.id,
+            code: room.code,
+            name: room.name,
+            price: room.price,
+            image: room.images?.[0],
+            address: room.address?.fullAddress,
+          },
+          favorited // truyền sẵn trạng thái hiện tại, khỏi phải fetch lại để kiểm tra
+      );
+      onToggle(room.id, nowFavorited);
     } finally {
       setPending(false);
     }
@@ -354,6 +352,237 @@ function getFallbackImage(roomTypeName: string, idx: number) {
   return FALLBACK_IMAGES[idx % FALLBACK_IMAGES.length];
 }
 
+// ─── AUTH MENU (LOGGED IN) — đồng bộ với BookingPageClient.tsx: user menu +
+// chuông thông báo thật (fetch /api/notifications) + hamburger menu. ──────────
+function AuthMenuLoggedIn({ userRole }: { userRole?: Roles | null }) {
+  const router = useRouter();
+  const { signOut } = useClerk();
+  const [hamburgerOpen, setHamburgerOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const hamburgerRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (hamburgerRef.current && !hamburgerRef.current.contains(e.target as Node)) setHamburgerOpen(false);
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Lấy danh sách + số lượng thông báo chưa đọc ngay khi vào trang, và cập
+  // nhật lại mỗi 30 giây để chuông không bị đứng im (không cần bấm F5).
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications", { cache: "no-store" });
+      if (!res.ok) return;
+      const json = await res.json();
+      setNotifications(json.data || []);
+      setUnreadCount(json.unreadCount || 0);
+    } catch (err) {
+      console.error("Lỗi lấy thông báo:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  // Khi mở dropdown chuông: đánh dấu tất cả đã đọc và cập nhật giao diện ngay lập tức.
+  const handleToggleNotif = async () => {
+    const willOpen = !notifOpen;
+    setNotifOpen(willOpen);
+    setHamburgerOpen(false);
+    setUserOpen(false);
+    if (willOpen) {
+      setNotifLoading(true);
+      await fetchNotifications();
+      setNotifLoading(false);
+      if (unreadCount > 0) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+        fetch("/api/notifications/read-all", { method: "PUT" }).catch((err) =>
+            console.error("Lỗi đánh dấu đã đọc:", err)
+        );
+      }
+    }
+  };
+
+  const hamburgerItems = [
+    { icon: "transaction", label: "Thông tin giao dịch", href: "/account/transactions" },
+    { icon: "reward", label: "Điểm thưởng và ưu đãi", href: "/account/rewards" },
+    { icon: "heart", label: "Phòng yêu thích", href: "/account/favorites" },
+    { icon: "booking", label: "Quản lý đặt phòng", href: "/account/bookings" },
+  ];
+
+  return (
+      <div className="flex items-center gap-3 shrink-0">
+        {userRole === "admin" && (
+            <Link href="/dashboard" className="text-sm font-semibold text-gray-700 hover:text-green-600 transition">Quản trị</Link>
+        )}
+
+        {/* User icon */}
+        <div className="relative" ref={userRef}>
+          <button
+              onClick={() => { setUserOpen(o => !o); setHamburgerOpen(false); }}
+              className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-400 transition bg-white"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </button>
+          {userOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                <Link href="/account/profile" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-sm text-gray-700">
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" strokeWidth={1.5}/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11a3 3 0 100-6 3 3 0 000 6zM6.168 18.849A4 4 0 0110 16h4a4 4 0 013.834 2.855" />
+                  </svg>
+                  Thông tin tài khoản
+                </Link>
+                <Link href="/account/profile" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-sm text-gray-700">
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Đổi mật khẩu
+                </Link>
+                <button
+                    onClick={() => signOut({ redirectUrl: "/" })}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-sm text-red-500 font-semibold"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Đăng xuất tài khoản
+                </button>
+              </div>
+          )}
+        </div>
+
+        {/* Bell icon */}
+        <div className="relative" ref={notifRef}>
+          <button
+              onClick={handleToggleNotif}
+              className="relative w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-400 transition bg-white"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-green-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+            )}
+          </button>
+
+          {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
+                  <span className="text-sm font-semibold text-gray-800">Thông báo</span>
+                </div>
+
+                {notifLoading ? (
+                    <div className="px-4 py-6 text-center text-sm text-gray-400">Đang tải...</div>
+                ) : notifications.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-sm text-gray-400">Chưa có thông báo nào.</div>
+                ) : (
+                    notifications.map((n) => {
+                      const content = (
+                          <div
+                              key={n.id}
+                              className={`px-4 py-3 hover:bg-gray-50 transition text-sm border-b border-gray-50 last:border-b-0 ${
+                                  !n.isRead ? "bg-green-50/50" : ""
+                              }`}
+                          >
+                            <p className="font-medium text-gray-800 line-clamp-1">{n.title || "Thông báo"}</p>
+                            {n.message && (
+                                <p className="text-gray-500 text-xs mt-0.5 line-clamp-2">{n.message}</p>
+                            )}
+                            {n.createdAt && (
+                                <p className="text-gray-400 text-[11px] mt-1">
+                                  {new Date(n.createdAt).toLocaleString("vi-VN")}
+                                </p>
+                            )}
+                          </div>
+                      );
+                      return n.link ? (
+                          <Link key={n.id} href={n.link} onClick={() => setNotifOpen(false)}>
+                            {content}
+                          </Link>
+                      ) : (
+                          content
+                      );
+                    })
+                )}
+              </div>
+          )}
+        </div>
+
+        {/* Hamburger menu */}
+        <div className="relative" ref={hamburgerRef}>
+          <button
+              onClick={() => { setHamburgerOpen(o => !o); setUserOpen(false); }}
+              className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-400 transition bg-white"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          {hamburgerOpen && (
+              <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                {hamburgerItems.map((item) => (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-sm text-gray-700"
+                    >
+                      <HamburgerIcon type={item.icon} />
+                      {item.label}
+                    </Link>
+                ))}
+              </div>
+          )}
+        </div>
+      </div>
+  );
+}
+
+function HamburgerIcon({ type }: { type: string }) {
+  const cls = "w-5 h-5 text-green-600";
+  switch (type) {
+    case "transaction": return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+    );
+    case "reward": return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+        </svg>
+    );
+    case "heart": return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+    );
+    case "booking": return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+    );
+    default: return null;
+  }
+}
+
 export default function HomePageClient({
                                          initialRooms,
                                          isLoggedIn = false,
@@ -373,6 +602,48 @@ export default function HomePageClient({
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(2);
   const [carouselIdx, setCarouselIdx] = useState(0);
+
+  // Danh sách phòng yêu thích — CHỈ tải 1 LẦN DUY NHẤT ở đây cho toàn bộ trang,
+  // rồi truyền xuống từng FavoriteButton qua Set. Trước đây mỗi FavoriteButton
+  // tự gọi API riêng khi mount, nên trang có bao nhiêu card phòng là bấy nhiêu
+  // request /api/favorites chạy song song, làm trang tải rất chậm.
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let active = true;
+    getFavorites().then((list) => {
+      if (active) setFavoriteIds(new Set(list.map((f) => f.id)));
+    });
+    return () => {
+      active = false;
+    };
+  }, [isLoggedIn]);
+
+  const handleFavoriteToggle = (roomId: string, nowFavorited: boolean) => {
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (nowFavorited) next.add(roomId);
+      else next.delete(roomId);
+      return next;
+    });
+  };
+
+  // Cài đặt hệ thống (mạng xã hội...) lấy từ trang Quản trị > Cài đặt
+  const [socials, setSocials] = useState<{ facebook?: string; zalo?: string; instagram?: string }>({});
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/settings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (active) setSocials(data.data?.socials || {});
+        })
+        .catch((error) => console.error("Lỗi tải cài đặt hệ thống:", error));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Carousel "Homestay" ở trang chủ chỉ lọc theo cơ sở đã chọn (thẻ Bảo An - Cơ sở 1/5).
   // Ô "Địa điểm" KHÔNG lọc real-time ở đây nữa — nó chỉ được dùng khi bấm nút
@@ -475,12 +746,7 @@ export default function HomePageClient({
             {/* Auth */}
             <div className="flex items-center gap-4 shrink-0">
               {isLoggedIn ? (
-                  <>
-                    {userRole === "admin" && (
-                        <Link href="/dashboard" className="text-sm font-semibold text-gray-700 hover:text-green-600 transition">Quản trị</Link>
-                    )}
-                    <UserButton />
-                  </>
+                  <AuthMenuLoggedIn userRole={userRole} />
               ) : (
                   <>
                     <Link href="/sign-in" className="text-sm font-semibold text-gray-700 hover:text-green-600 transition">Đăng nhập</Link>
@@ -573,10 +839,7 @@ export default function HomePageClient({
                     style={{ transform: `translateX(-${carouselIdx * (CARD_WIDTH + 20)}px)` }}
                 >
                   {filteredHomestays.map((room, idx) => {
-                    const isAvailable =
-                        room.status === "available" ||
-                        room.status === "AVAILABLE" ||
-                        room.status === "Sẵn sàng";
+                    const isAvailable = isRoomAvailable(room.status);
                     const price3h = Math.round(room.price * 0.45);
 
                     return (
@@ -607,7 +870,12 @@ export default function HomePageClient({
                               )}
                             </div>
                             {/* Nút yêu thích */}
-                            <FavoriteButton room={room} isLoggedIn={isLoggedIn} />
+                            <FavoriteButton
+                                room={room}
+                                isLoggedIn={isLoggedIn}
+                                favorited={favoriteIds.has(room.id)}
+                                onToggle={handleFavoriteToggle}
+                            />
                           </div>
 
                           {/* Nội dung card */}
@@ -701,10 +969,10 @@ export default function HomePageClient({
             </nav>
             <div className="flex items-center gap-3">
               <div className="flex gap-2">
-                <Link href="#" className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                <Link href={socials.instagram || "#"} target="_blank" rel="noopener noreferrer" className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
                 </Link>
-                <Link href="#" className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                <Link href={socials.facebook || "#"} target="_blank" rel="noopener noreferrer" className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 </Link>
               </div>

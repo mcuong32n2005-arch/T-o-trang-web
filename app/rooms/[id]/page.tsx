@@ -425,6 +425,58 @@ function CancellationPolicyModal({ open, onClose }: { open: boolean; onClose: ()
     );
 }
 
+// ─── Các bước trong luồng đặt phòng (hiển thị ở sidebar bên phải) ───────────
+type BookingStep = "form" | "confirm" | "payment" | "success";
+
+const BOOKING_STEPS: { key: BookingStep; label: string }[] = [
+    { key: "form", label: "Điền thông tin" },
+    { key: "confirm", label: "Xác nhận đơn" },
+    { key: "payment", label: "Thanh toán" },
+    { key: "success", label: "Hoàn tất" },
+];
+
+function BookingStepsBar({ step }: { step: BookingStep }) {
+    const activeIndex = BOOKING_STEPS.findIndex((s) => s.key === step);
+    return (
+        <div className="flex items-start mb-1">
+            {BOOKING_STEPS.map((s, i) => (
+                <React.Fragment key={s.key}>
+                    <div className="flex flex-col items-center gap-1 w-0 flex-1">
+                        <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition shrink-0 ${
+                                i < activeIndex
+                                    ? "bg-green-600 text-white"
+                                    : i === activeIndex
+                                        ? "bg-green-600 text-white ring-4 ring-green-100"
+                                        : "bg-gray-100 text-gray-400"
+                            }`}
+                        >
+                            {i < activeIndex ? "✓" : i + 1}
+                        </div>
+                        <span className={`text-[9px] text-center leading-tight ${i === activeIndex ? "text-green-700 font-semibold" : "text-gray-400"}`}>
+                            {s.label}
+                        </span>
+                    </div>
+                    {i < BOOKING_STEPS.length - 1 && (
+                        <div className={`h-0.5 flex-1 mt-3 ${i < activeIndex ? "bg-green-600" : "bg-gray-200"}`} />
+                    )}
+                </React.Fragment>
+            ))}
+        </div>
+    );
+}
+
+// ─── Danh sách phương thức thanh toán ───────────────────────────────────────
+type PaymentMethod = "cod" | "vnpay" | "momo" | "stripe" | "bank";
+
+const PAYMENT_METHODS: { key: PaymentMethod; label: string; desc: string }[] = [
+    { key: "cod", label: "Thanh toán khi nhận phòng", desc: "Thanh toán tiền mặt hoặc chuyển khoản trực tiếp khi check-in" },
+    { key: "vnpay", label: "VNPay", desc: "Thanh toán qua thẻ ATM nội địa / ví điện tử VNPay" },
+    { key: "momo", label: "MoMo", desc: "Thanh toán nhanh bằng ví MoMo" },
+    { key: "stripe", label: "Stripe", desc: "Thanh toán bằng thẻ quốc tế Visa / Mastercard" },
+    { key: "bank", label: "Chuyển khoản ngân hàng", desc: "Đơn sẽ được xác nhận sau khi nhận được tiền chuyển khoản" },
+];
+
 export default function RoomDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -446,7 +498,8 @@ export default function RoomDetailPage() {
     const [guestNote, setGuestNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [bookingError, setBookingError] = useState("");
-    const [bookingSuccess, setBookingSuccess] = useState(false);
+    const [bookingStep, setBookingStep] = useState<BookingStep>("form");
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
     const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
 
     useEffect(() => {
@@ -517,7 +570,8 @@ export default function RoomDetailPage() {
         }
     };
 
-    const handleBooking = async () => {
+    // Bước 1 (Điền thông tin) → kiểm tra hợp lệ rồi sang bước Xác nhận đơn đặt phòng
+    const handleGoToConfirm = () => {
         setBookingError("");
 
         if (!checkIn || !checkOut) {
@@ -533,6 +587,18 @@ export default function RoomDetailPage() {
             return;
         }
 
+        setBookingStep("confirm");
+    };
+
+    // Bước 2 (Xác nhận đơn đặt phòng) → sang bước Chọn phương thức thanh toán
+    const handleConfirmOrder = () => {
+        setBookingError("");
+        setBookingStep("payment");
+    };
+
+    // Bước 3+4 (Chọn phương thức thanh toán → Thanh toán) → tạo đơn đặt phòng thật sự
+    const handlePay = async () => {
+        setBookingError("");
         setSubmitting(true);
         try {
             const res = await fetch("/api/bookings", {
@@ -548,6 +614,7 @@ export default function RoomDetailPage() {
                     guestPhone: guestPhone.trim(),
                     guestNote: guestNote.trim(),
                     price: room?.price,
+                    paymentMethod,
                 }),
             });
 
@@ -565,7 +632,7 @@ export default function RoomDetailPage() {
                 return;
             }
 
-            setBookingSuccess(true);
+            setBookingStep("success");
         } catch (error) {
             console.error("Lỗi đặt phòng:", error);
             setBookingError("Lỗi hệ thống, vui lòng thử lại.");
@@ -818,7 +885,7 @@ export default function RoomDetailPage() {
 
                     {/* ═══════ CỘT PHẢI: SIDEBAR ĐẶT PHÒNG ═══════ */}
                     <div className="lg:col-span-1">
-                        {bookingSuccess ? (
+                        {bookingStep === "success" ? (
                             <div className="border border-gray-200 rounded-2xl p-6 shadow-sm sticky top-24 text-center space-y-4">
                                 <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 flex items-center justify-center">
                                     <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
@@ -837,96 +904,227 @@ export default function RoomDetailPage() {
                             </div>
                         ) : (
                             <div className="border border-gray-200 rounded-2xl p-5 shadow-sm sticky top-24 space-y-4">
-                                <h3 className="text-base font-bold text-gray-900">Thông tin chi tiết</h3>
+                                <BookingStepsBar step={bookingStep} />
 
-                                <div className="flex items-center border border-gray-300 rounded-lg bg-white h-14">
-                                    <div className="flex-1 h-full px-3 border-r border-gray-200">
-                                        <DateField label="Thời gian nhận" value={checkIn} onChange={setCheckIn} />
-                                    </div>
-                                    <div className="flex-1 h-full px-3">
-                                        <DateField label="Thời gian trả" value={checkOut} onChange={setCheckOut} />
-                                    </div>
-                                </div>
+                                {/* ─── Bước 1: Điền thông tin ─── */}
+                                {bookingStep === "form" && (
+                                    <>
+                                        <h3 className="text-base font-bold text-gray-900">Thông tin chi tiết</h3>
 
-                                <div className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2.5">
-                                    <span className="text-sm text-gray-700">Số khách (tối đa {maxGuests} khách)</span>
-                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center border border-gray-300 rounded-lg bg-white h-14">
+                                            <div className="flex-1 h-full px-3 border-r border-gray-200">
+                                                <DateField label="Thời gian nhận" value={checkIn} onChange={setCheckIn} />
+                                            </div>
+                                            <div className="flex-1 h-full px-3">
+                                                <DateField label="Thời gian trả" value={checkOut} onChange={setCheckOut} />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2.5">
+                                            <span className="text-sm text-gray-700">Số khách (tối đa {maxGuests} khách)</span>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setGuests((g) => Math.max(1, g - 1))}
+                                                    className="w-6 h-6 rounded-full border border-gray-300 text-gray-500 hover:border-green-500 hover:text-green-600 flex items-center justify-center transition"
+                                                >−</button>
+                                                <span className="text-sm font-semibold w-4 text-center">{guests}</span>
+                                                <button
+                                                    onClick={() => setGuests((g) => Math.min(maxGuests, g + 1))}
+                                                    className="w-6 h-6 rounded-full border border-gray-300 text-gray-500 hover:border-green-500 hover:text-green-600 flex items-center justify-center transition"
+                                                >+</button>
+                                            </div>
+                                        </div>
+
+                                        {/* Thông tin khách đặt phòng */}
+                                        <div className="space-y-2.5 border-t border-gray-100 pt-4">
+                                            <h4 className="text-sm font-bold text-gray-800">Thông tin khách đặt phòng</h4>
+                                            <input
+                                                type="text"
+                                                value={guestName}
+                                                onChange={(e) => setGuestName(e.target.value)}
+                                                placeholder="Họ và tên"
+                                                className="w-full text-sm p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
+                                            />
+                                            <input
+                                                type="tel"
+                                                value={guestPhone}
+                                                onChange={(e) => setGuestPhone(e.target.value)}
+                                                placeholder="Số điện thoại"
+                                                className="w-full text-sm p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
+                                            />
+                                            <textarea
+                                                value={guestNote}
+                                                onChange={(e) => setGuestNote(e.target.value)}
+                                                placeholder="Ghi chú (không bắt buộc)"
+                                                rows={2}
+                                                className="w-full text-sm p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 resize-none"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <input
+                                                type="text"
+                                                placeholder="Mã giảm giá"
+                                                disabled
+                                                className="w-full text-sm p-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-400 cursor-not-allowed"
+                                            />
+                                            <p className="text-[10px] text-gray-400 mt-1">Chức năng mã giảm giá sẽ sớm được hỗ trợ.</p>
+                                        </div>
+
+                                        <div className="border-t border-gray-100 pt-4">
+                                            <h4 className="text-sm font-bold text-gray-800 mb-2">Đơn giá chi tiết</h4>
+                                            {nights > 0 ? (
+                                                <p className="text-xs text-gray-500 mb-2">
+                                                    {nights} đêm × {room.price.toLocaleString("vi-VN")}đ
+                                                </p>
+                                            ) : (
+                                                <p className="text-xs text-gray-400 mb-2">Chọn ngày nhận và trả phòng để xem giá.</p>
+                                            )}
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-semibold text-gray-700">Tổng tiền</span>
+                                                <span className="text-xl font-black text-green-600">{total.toLocaleString("vi-VN")}đ</span>
+                                            </div>
+                                        </div>
+
+                                        {bookingError && (
+                                            <p className="text-xs text-red-500 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                                                {bookingError}
+                                            </p>
+                                        )}
+
                                         <button
-                                            onClick={() => setGuests((g) => Math.max(1, g - 1))}
-                                            className="w-6 h-6 rounded-full border border-gray-300 text-gray-500 hover:border-green-500 hover:text-green-600 flex items-center justify-center transition"
-                                        >−</button>
-                                        <span className="text-sm font-semibold w-4 text-center">{guests}</span>
-                                        <button
-                                            onClick={() => setGuests((g) => Math.min(maxGuests, g + 1))}
-                                            className="w-6 h-6 rounded-full border border-gray-300 text-gray-500 hover:border-green-500 hover:text-green-600 flex items-center justify-center transition"
-                                        >+</button>
-                                    </div>
-                                </div>
-
-                                {/* Thông tin khách đặt phòng */}
-                                <div className="space-y-2.5 border-t border-gray-100 pt-4">
-                                    <h4 className="text-sm font-bold text-gray-800">Thông tin khách đặt phòng</h4>
-                                    <input
-                                        type="text"
-                                        value={guestName}
-                                        onChange={(e) => setGuestName(e.target.value)}
-                                        placeholder="Họ và tên"
-                                        className="w-full text-sm p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-                                    />
-                                    <input
-                                        type="tel"
-                                        value={guestPhone}
-                                        onChange={(e) => setGuestPhone(e.target.value)}
-                                        placeholder="Số điện thoại"
-                                        className="w-full text-sm p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-                                    />
-                                    <textarea
-                                        value={guestNote}
-                                        onChange={(e) => setGuestNote(e.target.value)}
-                                        placeholder="Ghi chú (không bắt buộc)"
-                                        rows={2}
-                                        className="w-full text-sm p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 resize-none"
-                                    />
-                                </div>
-
-                                <div>
-                                    <input
-                                        type="text"
-                                        placeholder="Mã giảm giá"
-                                        disabled
-                                        className="w-full text-sm p-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-400 cursor-not-allowed"
-                                    />
-                                    <p className="text-[10px] text-gray-400 mt-1">Chức năng mã giảm giá sẽ sớm được hỗ trợ.</p>
-                                </div>
-
-                                <div className="border-t border-gray-100 pt-4">
-                                    <h4 className="text-sm font-bold text-gray-800 mb-2">Đơn giá chi tiết</h4>
-                                    {nights > 0 ? (
-                                        <p className="text-xs text-gray-500 mb-2">
-                                            {nights} đêm × {room.price.toLocaleString("vi-VN")}đ
-                                        </p>
-                                    ) : (
-                                        <p className="text-xs text-gray-400 mb-2">Chọn ngày nhận và trả phòng để xem giá.</p>
-                                    )}
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-semibold text-gray-700">Tổng tiền</span>
-                                        <span className="text-xl font-black text-green-600">{total.toLocaleString("vi-VN")}đ</span>
-                                    </div>
-                                </div>
-
-                                {bookingError && (
-                                    <p className="text-xs text-red-500 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                                        {bookingError}
-                                    </p>
+                                            onClick={handleGoToConfirm}
+                                            disabled={!isAvailable}
+                                            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-sm py-3 rounded-lg shadow transition"
+                                        >
+                                            {!isAvailable ? "Phòng đã được đặt" : "Tiếp tục"}
+                                        </button>
+                                    </>
                                 )}
 
-                                <button
-                                    onClick={handleBooking}
-                                    disabled={!isAvailable || submitting}
-                                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-sm py-3 rounded-lg shadow transition"
-                                >
-                                    {!isAvailable ? "Phòng đã được đặt" : submitting ? "Đang xử lý..." : "Đặt phòng"}
-                                </button>
+                                {/* ─── Bước 2: Xác nhận đơn đặt phòng ─── */}
+                                {bookingStep === "confirm" && (
+                                    <>
+                                        <h3 className="text-base font-bold text-gray-900">Xác nhận đơn đặt phòng</h3>
+
+                                        <div className="space-y-3 text-sm border border-gray-200 rounded-lg p-3.5">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-500">Phòng</span>
+                                                <span className="font-semibold text-gray-800 text-right">{room.name}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-500">Nhận phòng</span>
+                                                <span className="font-semibold text-gray-800 text-right">
+                                                    {checkIn && `${new Date(checkIn).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}, ${checkIn.slice(11, 16)}`}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-500">Trả phòng</span>
+                                                <span className="font-semibold text-gray-800 text-right">
+                                                    {checkOut && `${new Date(checkOut).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}, ${checkOut.slice(11, 16)}`}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-500">Số đêm</span>
+                                                <span className="font-semibold text-gray-800">{nights} đêm</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-500">Số khách</span>
+                                                <span className="font-semibold text-gray-800">{guests} khách</span>
+                                            </div>
+                                            <div className="border-t border-gray-100 pt-3">
+                                                <p className="text-gray-500 mb-1">Khách đặt phòng</p>
+                                                <p className="font-semibold text-gray-800">{guestName}</p>
+                                                <p className="text-gray-600">{guestPhone}</p>
+                                                {guestNote && <p className="text-gray-400 text-xs mt-1">Ghi chú: {guestNote}</p>}
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-gray-100 pt-4 flex items-center justify-between">
+                                            <span className="text-sm font-semibold text-gray-700">Tổng tiền</span>
+                                            <span className="text-xl font-black text-green-600">{total.toLocaleString("vi-VN")}đ</span>
+                                        </div>
+
+                                        {bookingError && (
+                                            <p className="text-xs text-red-500 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                                                {bookingError}
+                                            </p>
+                                        )}
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setBookingStep("form")}
+                                                className="flex-1 border border-gray-300 text-gray-700 font-semibold text-sm py-3 rounded-lg hover:bg-gray-50 transition"
+                                            >
+                                                Quay lại
+                                            </button>
+                                            <button
+                                                onClick={handleConfirmOrder}
+                                                className="flex-[2] bg-green-600 hover:bg-green-700 text-white font-bold text-sm py-3 rounded-lg shadow transition"
+                                            >
+                                                Xác nhận đơn
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* ─── Bước 3+4: Chọn phương thức thanh toán & Thanh toán ─── */}
+                                {bookingStep === "payment" && (
+                                    <>
+                                        <h3 className="text-base font-bold text-gray-900">Chọn phương thức thanh toán</h3>
+
+                                        <div className="space-y-2">
+                                            {PAYMENT_METHODS.map((m) => (
+                                                <label
+                                                    key={m.key}
+                                                    className={`flex items-start gap-3 border rounded-lg p-3 cursor-pointer transition ${
+                                                        paymentMethod === m.key ? "border-green-600 bg-green-50" : "border-gray-200 hover:border-gray-300"
+                                                    }`}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="paymentMethod"
+                                                        checked={paymentMethod === m.key}
+                                                        onChange={() => setPaymentMethod(m.key)}
+                                                        className="mt-1 accent-green-600"
+                                                    />
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-gray-800">{m.label}</p>
+                                                        <p className="text-xs text-gray-500">{m.desc}</p>
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+
+                                        <div className="border-t border-gray-100 pt-4 flex items-center justify-between">
+                                            <span className="text-sm font-semibold text-gray-700">Tổng tiền</span>
+                                            <span className="text-xl font-black text-green-600">{total.toLocaleString("vi-VN")}đ</span>
+                                        </div>
+
+                                        {bookingError && (
+                                            <p className="text-xs text-red-500 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                                                {bookingError}
+                                            </p>
+                                        )}
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setBookingStep("confirm")}
+                                                disabled={submitting}
+                                                className="flex-1 border border-gray-300 text-gray-700 font-semibold text-sm py-3 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+                                            >
+                                                Quay lại
+                                            </button>
+                                            <button
+                                                onClick={handlePay}
+                                                disabled={submitting}
+                                                className="flex-[2] bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-sm py-3 rounded-lg shadow transition"
+                                            >
+                                                {submitting ? "Đang xử lý..." : "Thanh toán"}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>

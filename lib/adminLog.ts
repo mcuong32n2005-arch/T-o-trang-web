@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/mongodb";
+import type { NotificationType } from "@/lib/types";
 
 // Ghi 1 dòng nhật ký hệ thống mỗi khi admin thực hiện thao tác quan trọng
 // (thêm/sửa/xoá). Gọi sau khi thao tác chính đã thành công.
@@ -23,11 +24,15 @@ export async function logAction(params: {
   }
 }
 
-// Tạo 1 thông báo nội bộ cho admin (booking mới, hủy, thanh toán, review mới...)
+// Tạo 1 thông báo. Có 2 chế độ:
+// - Không truyền recipientId  -> thông báo nội bộ dùng chung cho ADMIN (hành vi cũ, không đổi).
+// - Có truyền recipientId     -> thông báo riêng cho 1 KHÁCH HÀNG cụ thể (theo userId của Clerk),
+//                                 chỉ khách đó thấy khi gọi GET /api/notifications.
 export async function createNotification(params: {
-  type: "new_booking" | "cancel_booking" | "payment" | "new_review";
+  type: NotificationType;
   message: string;
   relatedId?: string;
+  recipientId?: string;
 }) {
   try {
     const db = await getDb();
@@ -35,6 +40,7 @@ export async function createNotification(params: {
       type: params.type,
       message: params.message,
       relatedId: params.relatedId || "",
+      recipientId: params.recipientId || null,
       isRead: false,
       createdAt: new Date(),
     });

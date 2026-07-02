@@ -65,12 +65,18 @@ export async function removeFavorite(roomId: string): Promise<boolean> {
     }
 }
 
-// Bật/tắt yêu thích — kiểm tra trạng thái hiện tại rồi gọi add hoặc remove
-// tương ứng. Trả về true nếu sau khi bấm phòng đang ở trạng thái "đã yêu
-// thích", false nếu vừa bị bỏ yêu thích.
-export async function toggleFavorite(room: FavoriteRoom): Promise<boolean> {
-    const currentlyFavorited = await isFavorite(room.id);
-    if (currentlyFavorited) {
+// Bật/tắt yêu thích. `currentlyFavorited` nên được truyền vào từ nơi gọi (nếu
+// đã biết trạng thái sẵn, ví dụ từ danh sách đã tải 1 lần ở component cha) để
+// tránh phải fetch lại toàn bộ danh sách yêu thích chỉ để kiểm tra 1 phòng —
+// điều này từng gây ra hàng chục request /api/favorites cùng lúc khi trang có
+// nhiều card phòng. Nếu không truyền, hàm sẽ tự fetch để kiểm tra như cũ (giữ
+// tương thích ngược cho các nơi gọi khác chưa kịp cập nhật).
+export async function toggleFavorite(
+    room: FavoriteRoom,
+    currentlyFavorited?: boolean
+): Promise<boolean> {
+    const wasFavorited = currentlyFavorited ?? (await isFavorite(room.id));
+    if (wasFavorited) {
         await removeFavorite(room.id);
         return false;
     } else {

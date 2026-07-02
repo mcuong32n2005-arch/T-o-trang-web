@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
-import { isFavorite, toggleFavorite } from '../account/_lib/favorites';
+import { getFavorites, toggleFavorite } from '../account/_lib/favorites';
+import { isRoomAvailable } from '@/lib/roomStatus';
 import type { Roles } from '@/types/globals';
 
 // ─── DATE PICKER COMPONENT ───────────────────────────────────────────────────
@@ -209,22 +210,20 @@ interface HomestayRoom {
 // khoản có danh sách riêng), tự đổi màu/biểu tượng theo trạng thái đã/chưa
 // yêu thích, và chặn click lan ra card (không mở trang chi tiết phòng khi
 // bấm tim). ───────────────────────────────────────────────────────────────
-function FavoriteButton({ room, className, isLoggedIn }: { room: HomestayRoom; className?: string; isLoggedIn: boolean }) {
-    const [favorited, setFavorited] = useState(false);
+function FavoriteButton({
+                            room,
+                            className,
+                            isLoggedIn,
+                            favorited,
+                            onToggle,
+                        }: {
+    room: HomestayRoom;
+    className?: string;
+    isLoggedIn: boolean;
+    favorited: boolean;
+    onToggle: (roomId: string, nowFavorited: boolean) => void;
+}) {
     const [pending, setPending] = useState(false);
-
-    useEffect(() => {
-        // Chưa đăng nhập thì không gọi API /api/favorites — tránh bị middleware
-        // redirect sang /sign-in cho từng phòng, gây chậm trang (mỗi card 1 request).
-        if (!isLoggedIn) return;
-        let active = true;
-        isFavorite(room.id).then((result) => {
-            if (active) setFavorited(result);
-        });
-        return () => {
-            active = false;
-        };
-    }, [room.id, isLoggedIn]);
 
     const handleClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -236,15 +235,18 @@ function FavoriteButton({ room, className, isLoggedIn }: { room: HomestayRoom; c
         }
         setPending(true);
         try {
-            const nowFavorited = await toggleFavorite({
-                id: room.id,
-                code: room.code,
-                name: room.name,
-                price: room.price,
-                image: room.images?.[0],
-                address: room.address?.fullAddress,
-            });
-            setFavorited(nowFavorited);
+            const nowFavorited = await toggleFavorite(
+                {
+                    id: room.id,
+                    code: room.code,
+                    name: room.name,
+                    price: room.price,
+                    image: room.images?.[0],
+                    address: room.address?.fullAddress,
+                },
+                favorited
+            );
+            onToggle(room.id, nowFavorited);
         } finally {
             setPending(false);
         }
@@ -358,17 +360,63 @@ function AuthMenuLoggedIn({ userRole }: { userRole?: Roles | null }) {
     const { signOut } = useClerk();
     const [hamburgerOpen, setHamburgerOpen] = useState(false);
     const [userOpen, setUserOpen] = useState(false);
+    const [notifOpen, setNotifOpen] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notifLoading, setNotifLoading] = useState(false);
     const hamburgerRef = useRef<HTMLDivElement>(null);
     const userRef = useRef<HTMLDivElement>(null);
+    const notifRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (hamburgerRef.current && !hamburgerRef.current.contains(e.target as Node)) setHamburgerOpen(false);
             if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
+            if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
         };
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
     }, []);
+
+    // Lấy danh sách + số lượng thông báo chưa đọc ngay khi vào trang, và cập
+    // nhật lại mỗi 30 giây để chuông không bị đứng im (không cần bấm F5).
+    const fetchNotifications = useCallback(async () => {
+        try {
+            const res = await fetch("/api/notifications", { cache: "no-store" });
+            if (!res.ok) return;
+            const json = await res.json();
+            setNotifications(json.data || []);
+            setUnreadCount(json.unreadCount || 0);
+        } catch (err) {
+            console.error("Lỗi lấy thông báo:", err);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30000);
+        return () => clearInterval(interval);
+    }, [fetchNotifications]);
+
+    // Khi mở dropdown chuông: đánh dấu tất cả đã đọc và cập nhật giao diện ngay lập tức.
+    const handleToggleNotif = async () => {
+        const willOpen = !notifOpen;
+        setNotifOpen(willOpen);
+        setHamburgerOpen(false);
+        setUserOpen(false);
+        if (willOpen) {
+            setNotifLoading(true);
+            await fetchNotifications();
+            setNotifLoading(false);
+            if (unreadCount > 0) {
+                setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+                setUnreadCount(0);
+                fetch("/api/notifications/read-all", { method: "PUT" }).catch((err) =>
+                    console.error("Lỗi đánh dấu đã đọc:", err)
+                );
+            }
+        }
+    };
 
     const hamburgerItems = [
         { icon: "transaction", label: "Thông tin giao dịch", href: "/account/transactions" },
@@ -418,12 +466,63 @@ function AuthMenuLoggedIn({ userRole }: { userRole?: Roles | null }) {
             </div>
 
             {/* Bell icon */}
-            <button className="relative w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-400 transition bg-white">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
-            </button>
+            <div className="relative" ref={notifRef}>
+                <button
+                    onClick={handleToggleNotif}
+                    className="relative w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-400 transition bg-white"
+                >
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-green-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                    )}
+                </button>
+
+                {notifOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                        <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
+                            <span className="text-sm font-semibold text-gray-800">Thông báo</span>
+                        </div>
+
+                        {notifLoading ? (
+                            <div className="px-4 py-6 text-center text-sm text-gray-400">Đang tải...</div>
+                        ) : notifications.length === 0 ? (
+                            <div className="px-4 py-6 text-center text-sm text-gray-400">Chưa có thông báo nào.</div>
+                        ) : (
+                            notifications.map((n) => {
+                                const content = (
+                                    <div
+                                        key={n.id}
+                                        className={`px-4 py-3 hover:bg-gray-50 transition text-sm border-b border-gray-50 last:border-b-0 ${
+                                            !n.isRead ? "bg-green-50/50" : ""
+                                        }`}
+                                    >
+                                        <p className="font-medium text-gray-800 line-clamp-1">{n.title || "Thông báo"}</p>
+                                        {n.message && (
+                                            <p className="text-gray-500 text-xs mt-0.5 line-clamp-2">{n.message}</p>
+                                        )}
+                                        {n.createdAt && (
+                                            <p className="text-gray-400 text-[11px] mt-1">
+                                                {new Date(n.createdAt).toLocaleString("vi-VN")}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                                return n.link ? (
+                                    <Link key={n.id} href={n.link} onClick={() => setNotifOpen(false)}>
+                                        {content}
+                                    </Link>
+                                ) : (
+                                    content
+                                );
+                            })
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Hamburger menu */}
             <div className="relative" ref={hamburgerRef}>
@@ -689,6 +788,32 @@ export default function HomePageClient({
     const [guests, setGuests] = useState(2);
     const [carouselIdx, setCarouselIdx] = useState(0);
 
+    // Danh sách phòng yêu thích — CHỈ tải 1 LẦN DUY NHẤT ở đây cho toàn bộ trang,
+    // rồi truyền xuống từng FavoriteButton qua Set, thay vì để mỗi nút tự gọi
+    // API riêng khi mount (trước đây gây hàng chục request /api/favorites chạy
+    // song song, làm trang tải rất chậm).
+    const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (!isLoggedIn) return;
+        let active = true;
+        getFavorites().then((list) => {
+            if (active) setFavoriteIds(new Set(list.map((f) => f.id)));
+        });
+        return () => {
+            active = false;
+        };
+    }, [isLoggedIn]);
+
+    const handleFavoriteToggle = (roomId: string, nowFavorited: boolean) => {
+        setFavoriteIds((prev) => {
+            const next = new Set(prev);
+            if (nowFavorited) next.add(roomId);
+            else next.delete(roomId);
+            return next;
+        });
+    };
+
     const filteredHomestays = useMemo(() => {
         return homestays.filter((room) => {
             if (selectedBranch !== "all") {
@@ -886,10 +1011,7 @@ export default function HomePageClient({
                             style={{ transform: `translateX(-${carouselIdx * (CARD_WIDTH + 20)}px)` }}
                         >
                             {filteredHomestays.map((room, idx) => {
-                                const isAvailable =
-                                    room.status === "available" ||
-                                    room.status === "AVAILABLE" ||
-                                    room.status === "Sẵn sàng";
+                                const isAvailable = isRoomAvailable(room.status);
                                 const price3h = Math.round(room.price * 0.45);
 
                                 return (
@@ -913,7 +1035,12 @@ export default function HomePageClient({
                               </span>
                                             </div>
                                             {/* Nút yêu thích */}
-                                            <FavoriteButton room={room} isLoggedIn={isLoggedIn} />
+                                            <FavoriteButton
+                                                room={room}
+                                                isLoggedIn={isLoggedIn}
+                                                favorited={favoriteIds.has(room.id)}
+                                                onToggle={handleFavoriteToggle}
+                                            />
                                         </div>
 
                                         {/* Nội dung card */}
